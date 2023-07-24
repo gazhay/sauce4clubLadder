@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>Club Ladder</title>
+        <script src="src/mod.mjs" type="module"></script>
+        <link rel="stylesheet" href="css/ladder-ripped.css">
+        <style media="screen">
+            html, body{
+                width         : 800px;
+                height        : 600px;
+                overflow      : hidden;
+                padding       : 0;
+                margin        : 0;
+                font-family   : ClubLadder, Helvetica, sans-serif;
+                color         : var(--ladder-text);
+                text-transform: uppercase;
+                box-sizing    : border-box;
+            }
+            .showBorder{
+                /* border : 1px solid; */
+                background-color: transparent;
+            }
+            .fill{
+                width           : 100%;
+                height          : 100%;
+                display         : flex;
+                justify-content : flex-start;
+                flex-direction  : column;
+                position        : relative;
+            }
+            .topBar{
+                width           : 100%;
+                height          : 100px;
+                background      : var(--bg-grey-bg);
+                /* color           : white; */
+                display         : flex;
+                flex-direction  : row;
+                justify-content : space-around;
+                align-items     : stretch;
+                border-top-right-radius:10px ;
+                border-top-left-radius: 10px;
+            }
+            .topBar section{
+                line-height   : auto;
+                font-size     : 20px;
+                font-weight   : bolder;
+                text-transform: uppercase;
+            }
+            .midbarimg{
+                height : 90px;
+                margin-top : 5px;
+            }
+            .SplashHomeTeam{
+                /* text-align     : right; */
+                display        : flex;
+                justify-content: center;
+                align-items    : center;
+                text-align: center;
+                max-width      : 380px;
+                width          : 100%;
+                padding        : 0;
+                padding-right  : 10px;
+            }
+            .SplashAwayTeam{
+                /* text-align     : left; */
+                display        : flex;
+                justify-content: center;
+                align-items    : center;
+                text-align: center;
+                max-width      : 380px;
+                width          : 100%;
+                padding        : 0;
+                padding-left   : 10px;
+            }
+            .riderParade{
+                display        : flex;
+                flex-direction : row;
+                justify-content: space-evenly;
+                margin-top     : 200px;
+                font-size      : 10px;
+                font-weight    : bolder;
+                text-transform : uppercase;
+                opacity        : 1;
+                transition     : all 0.5s ease-in-out;
+            }
+            .riderHide {
+              transition: all 0.5s ease-in-out;
+              opacity: 0;
+            }
+            .small {
+                font-size: 9px;
+            }
+            .riderParade div{
+                padding       : 30px;
+                border-radius : 30px;
+                background    : rgba(4, 63, 79,0.5);
+                color         : white;
+            }
+            .homeScore, .awayScore{
+                width          : 80px;
+                height         : 80px;
+                min-width      : 80px;
+                min-height     : 80px;
+                border-radius  : 50%;
+                font-size      : 60px;
+                background     : rgba(0,0,0,0.5);
+                display        : flex;
+                flex-direction : column;
+                margin-top     : 10px;
+                margin-left    : 20px;
+                margin-right   : 20px;
+                justify-content: center;
+                align-items: center;
+            }
+            .homeScore{ margin-right : 0; background : var(--ladder-secondary-bg); }
+            .awayScore{ margin-left  : 0; background : var(--ladder-tertiary-bg); }
+            .topBar section.homeScore{ font-size: 40px; }
+            .topBar section.awayScore{ font-size: 40px; }
+
+            .rider{
+                height         : 40px;
+                display        : flex;
+                width          : 100%;
+                justify-content: space-between;
+                margin-bottom  : 5px;
+                /* border         : 1px solid; */
+                transition     : 0.5s ease;
+            }
+            .rider div{
+                padding      : 0;
+                padding-left : 10px;
+                padding-right: 10px;
+                text-align   : center;
+                align-items: center;
+            }
+            .scoreList{
+                padding-top   : 10px;
+                width         : 100%;
+                height        : 500px;
+                display       : flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                position      : relative;
+                /* align-items: center; */
+            }
+            .rider .position{ width : 100px; margin:0; line-height: 40px}
+            .rider .score   { width : 50px;  margin:0; line-height: 40px}
+            .rider .name    { width : 265px; margin:0; line-height: 40px}
+
+            .homeRider .forAway { visibility: hidden; }
+            .awayRider .forHome { visibility: hidden; }
+
+            .name.forHome, .score.forHome { background : var(--ladder-secondary-bg); }
+            .name.forAway, .score.forAway { background : var(--ladder-tertiary-bg); }
+
+            .name {
+                font-weight : bolder;
+                font-size   : 20px;
+            }
+
+            .name.forHome {
+                border-top-right-radius   : 10px;
+                border-bottom-right-radius: 10px;
+            }
+            .name.forAway {
+                border-top-left-radius   : 10px;
+                border-bottom-left-radius: 10px;
+            }
+            .score.forHome{
+                border-top-left-radius   : 10px;
+                border-bottom-left-radius: 10px;
+                font-weight : bolder;
+                font-size : 25px;
+            }
+            .score.forAway{
+                border-top-right-radius   : 10px;
+                border-bottom-right-radius: 10px;
+                font-weight : bolder;
+                font-size : 25px;
+            }
+            .position {
+                font-weight : bold;
+                color       : white; /*rgba(255,255,255,0.75);*/
+                font-size   : 18px;
+            }
+            .hide{
+                display:none;
+            }
+            .winning{
+                color : var(--ladder-primary);
+            }
+            .losing{
+                color : var(ladder-text-bg);
+            }
+            .move{ -webkit-app-region: drag; }
+
+            body {
+                width           : 100vw;
+                height          : 100vh;
+                margin          : 0;
+                display         : flex;
+                justify-content : center;
+                align-items     : center;
+                background-color: white;
+                font-size       : min(1vw, 1.778vh);
+            }
+
+            main {
+                width           : 100em;
+                height          : 56.25em;
+                background-color: lightblue;
+            }
+
+            main > p {
+                font-size : 3em;
+                text-align: center;
+            }
+
+        </style>
+    </head>
+    <body class="move">
+        <main class="fill showBorder">
+            <section class="topBar">
+                <section class="homeScore"> </section> <section class="SplashHomeTeam"> </section>
+                <section><img class="midbarimg" src="images/logo-t.png"></section>
+                <section class="SplashAwayTeam">  </section><section class="awayScore"> </section>
+            </section>
+            <section class="scoreList">
+
+            </section>
+        </main>
+        <script type="text/javascript">
+        document.addEventListener("ready", ()=>{ moveWindow(); });
+        </script>
+    </body>
+</html>

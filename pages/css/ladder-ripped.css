@@ -1,0 +1,131 @@
+:root {
+    --bg-grey             : rgb(203, 208, 211);
+    --footer-bg           : #eceeed;
+    --ladder-primary      : rgb(227, 6, 17);
+    --ladder-secondary    : rgb(251, 176, 55);
+    --ladder-tertiary     : rgb(33, 113, 182);
+    --ladder-text         : rgb(29, 30, 28);
+    --ladder-black        : rgb(29, 30, 28);
+    --ladder-highlight    : rgba(33, 113, 182, 0.25);
+
+    --bg-grey-bg             : rgba(203, 208, 211, 0.75);
+    --ladder-primary-bg      : rgba(227,   6,  17, 0.75);
+    --ladder-secondary-bg    : rgba(251, 176,  55, 0.75);
+    --ladder-tertiary-bg     : rgba( 33, 113, 182, 0.75);
+    --ladder-text-bg         : rgba(  0,   0,   0, 0.75);/*rgba(255,255,255, 0.5);*/
+}
+
+html, body {
+    background      : transparent!important;
+    background-color: rgba(127, 127, 127, 0.002)!important;
+    user-select     :none;
+}
+
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-Black.ttf');
+    font-weight: 900;
+    font-style: normal;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-BlackItalic.ttf');
+    font-weight: 900;
+    font-style: italic;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-BoldItalic.ttf');
+    font-weight: 600;
+    font-style: italic;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-Bold.ttf');
+    font-weight: 600;
+    font-style: normal;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-ExtraBold.ttf');
+    font-weight: 700;
+    font-style: normal;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-ExtraBoldItalic.ttf');
+    font-weight: 700;
+    font-style: italic;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-ExtraLightItalic.ttf');
+    font-weight: 100;
+    font-style: italic;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-ExtraLight.ttf');
+    font-weight: 100;
+    font-style: normal;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-Italic.ttf');
+    font-weight: normal;
+    font-style: italic;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-LightItalic.ttf');
+    font-weight: 200;
+    font-style: italic;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-Light.ttf');
+    font-weight: 200;
+    font-style: normal;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-Regular.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-MediumItalic.ttf');
+    font-weight: 400;
+    font-style: italic;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-Medium.ttf');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-SemiBoldItalic.ttf');
+    font-weight: 500;
+    font-style: italic;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-SemiBold.ttf');
+    font-weight: 500;
+    font-style: normal;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-ThinItalic.ttf');
+    font-weight: 300;
+    font-style: italic;
+}
+@font-face {
+    font-family: "ClubLadder";
+    src: url('../fonts/SofiaSans-Thin.ttf');
+    font-weight: 300;
+    font-style: normal;
+}
