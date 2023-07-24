@@ -50,11 +50,12 @@ async function main() {
 
     common.subscribe('athlete/watching', async data => {
         // console.log(data);
+        let olduser = USER;
         if (data.athleteId != USER){
             console.log("Switched to ",USER);
             USER         = data.athleteId;
             INTERESTEDIN = [];
-            await fetchFromLadder();
+            if (olduser!=0) await fetchFromLadder();
         }
     });
 
