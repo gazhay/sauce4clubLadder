@@ -170,3 +170,12 @@ function renderRiders(){
         domAway.classList.remove("riderHide");
     }, 550);
 }
+
+window.addEventListener('keydown', (e)=>{
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.code=="Escape"  ) {
+        location.reload();
+    } else if (e.code == "ArrowUp"){
+    } else if (e.code == "ArrowDown"){
+    }
+});
