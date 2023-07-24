@@ -53,8 +53,8 @@ async function main() {
         console.log(data.athleteId, USER);
         let olduser = USER;
         if (data.athleteId != USER){
-            console.log("Switched to ",USER);
             USER         = data.athleteId;
+            console.log("Switched to ",USER);
             INTERESTEDIN = [];
             if (olduser!=0 && USER!=0) await fetchFromLadder();
         }
