@@ -50,13 +50,13 @@ async function main() {
     // console.log("Sauce Version:", await common.rpc.getVersion());
 
     common.subscribe('athlete/watching', async data => {
-        console.log(data.athleteId, USER);
+        // console.log(data.athleteId, USER);
         let olduser = USER;
         if (data.athleteId != USER){
             USER         = data.athleteId;
             console.log("Switched to ",USER);
             INTERESTEDIN = [];
-            if (olduser!=0 && USER!=0) await fetchFromLadder();
+            if (USER!=0) await fetchFromLadder();
         }
     });
 
