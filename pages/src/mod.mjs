@@ -142,6 +142,7 @@ function renderOneOffs(data, ids){
     document.querySelector(".homeScore").textContent = 0;
     document.querySelector(".awayScore").textContent = 0;
     let domDest = document.querySelector(".scoreList");
+    positionsCreated = 0;
     domDest.innerHTML = "";
     data.homeSignups = JSON.parse(data.homeSignups);
     data.awaySignups = JSON.parse(data.awaySignups);
