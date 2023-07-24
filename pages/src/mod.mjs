@@ -26,6 +26,7 @@ const riderHTML = (riderId,isHome) =>{
 }
 
 async function fetchFromLadder(){
+    if (USER==0) return null;
     console.log("Setting up",`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`);
     let myLadderData = await fetch(`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`).then(response=>response.json());
     if (!myLadderData || myLadderData.length==0){
