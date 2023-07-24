@@ -50,7 +50,7 @@ async function main() {
     // console.log("Sauce Version:", await common.rpc.getVersion());
 
     common.subscribe('athlete/watching', async data => {
-        // console.log(data);
+        console.log(data);
         let olduser = USER;
         if (data.athleteId != USER){
             console.log("Switched to ",USER);
