@@ -9,8 +9,7 @@ an empty **SauceMods** folder first.  Then each Mod will be a sub directory in t
 ```
 Documents
 └── SauceMods
-    ├── neato_mod
-    └── super_duper_theme_mod
+    ├── <Put me here>
 ```
 
 Usage
