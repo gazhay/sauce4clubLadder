@@ -36,6 +36,7 @@ async function fetchFromLadder(){
     myLadderData = myLadderData?.[0] || [];
 
     INTERESTEDIN = [...JSON.parse(myLadderData?.homeSignups),...JSON.parse(myLadderData?.awaySignups)];
+    console.log("Found riders from ladder :", INTERESTEDIN, myLadderData);
     renderOneOffs(myLadderData, INTERESTEDIN);
     return true;
 }
