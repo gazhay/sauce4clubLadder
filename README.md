@@ -1,6 +1,14 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+Changelog 1 Aug 23
+------------------
+Made resizing work (a bit)
+- I know that I currently use "nearby" data for this widget - it is less than ideal if someone is dropped and not near the rider being watched - I will try to get this fixed in the next update
+
+- To resize you might want to hit the "up arrow" key on the keyboard which changes the background transparency/opacity
+- dn arrow does the opposite.
+
 Installing
 --------
 A Sauce for Zwift "Mod" is a directory placed in `~/Documents/SauceMods`.  NOTE: "Documents"

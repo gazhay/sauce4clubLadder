@@ -16,8 +16,7 @@
 }
 
 html, body {
-    background      : transparent!important;
-    background-color: rgba(127, 127, 127, 0.002)!important;
+    background      : transparent;
     user-select     :none;
 }
 

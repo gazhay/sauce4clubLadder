@@ -12,19 +12,21 @@ var INTERESTEDIN = [];
 const scoreForPos = pos=>[12,10,8,7,6,5,4,3,2,1][pos-1]??0;
 const tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
 
+
 var positionsCreated = 0;
 const riderHTML = (riderId,isHome) =>{
     if (positionsCreated>=10) return "";
     let thisPos = ++positionsCreated;
     let output =
-    `<div class="rider ${isHome?"home":"away"}Rider" data-rider-id="${riderId}" data-move-to-position="${thisPos}">
-        <div class="score forHome"> ${scoreForPos(thisPos)} </div> <div class="name forHome text-truncate">  </div>
-        <div class="position"> ${thisPos} </div>
-        <div class="name forAway text-truncate">  </div> <div class="score forAway"> ${scoreForPos(thisPos)} </div>
+    `<div class="rider ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
+        <div class="score forHome scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
+        <div class="name forHome text-truncate">  </div>
+        <div class="position scaleMe" data-font-size="18" data-line-height="40" data-scale="textOnly"> ${thisPos} </div>
+        <div class="name forAway text-truncate">  </div>
+        <div class="score forAway scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
     </div>`;
     return output;
 }
-
 async function fetchFromLadder(){
     if (USER==0) return null;
     console.log("Setting up",`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`);
@@ -40,7 +42,6 @@ async function fetchFromLadder(){
     renderOneOffs(myLadderData, INTERESTEDIN);
     return true;
 }
-
 async function main() {
     // common.initInteractionListeners();
     let refresh;
@@ -48,7 +49,6 @@ async function main() {
         refresh = 1 * 1000 - 100; // 1s
     };
     setRefresh();
-    // console.log("Sauce Version:", await common.rpc.getVersion());
 
     common.subscribe('athlete/watching', async data => {
         // console.log(data.athleteId, USER);
@@ -63,7 +63,6 @@ async function main() {
 
     await fetchFromLadder();
 
-    // console.log(myLadderData);
     let lastRefresh = 0;
     common.subscribe('nearby', data => {
         try{
@@ -79,7 +78,6 @@ async function main() {
             renderData(data);
         }
     });
-
 }
 
 main();
@@ -149,7 +147,24 @@ function renderOneOffs(data, ids){
     for(let id of ids){
         if (domDest){
             let thisCard = riderHTML(id, data.homeSignups.includes(id));
-            console.log(id,thisCard);
+            // console.log(id,thisCard);
+            domDest.insertAdjacentHTML('beforeend', thisCard);
+        }
+    }
+}
+
+function testCards(){
+    document.querySelector(".SplashHomeTeam").textContent = "My Home Team";
+    document.querySelector(".SplashAwayTeam").textContent = "My Away Team";
+    document.querySelector(".homeScore").textContent = 0;
+    document.querySelector(".awayScore").textContent = 0;
+    let domDest = document.querySelector(".scoreList");
+    positionsCreated = 0;
+    domDest.innerHTML = "";
+    for(let j=0; j<10; j++){
+        if (domDest){
+            let thisCard = riderHTML(44249, (j%2==0) );
+            // console.log(id,thisCard);
             domDest.insertAdjacentHTML('beforeend', thisCard);
         }
     }
@@ -175,11 +190,78 @@ function renderRiders(){
     }, 550);
 }
 
+var backgroundOpacity = 0;
 window.addEventListener('keydown', (e)=>{
     if (e.isComposing || e.keyCode === 229) return;
     if (e.code=="Escape"  ) {
         location.reload();
     } else if (e.code == "ArrowUp"){
+        backgroundOpacity += 0.10;
+        backgroundOpacity = Math.min(1,backgroundOpacity);
+        document.body.style["background"] = `rgba(0,0,0,${backgroundOpacity})`;
     } else if (e.code == "ArrowDown"){
+        backgroundOpacity -= 0.10;
+        backgroundOpacity = Math.min(1,backgroundOpacity);
+        document.body.style["background"] = `rgba(0,0,0,${backgroundOpacity})`;
     }
 });
+
+window.addEventListener("resize", resizeFunc);
+
+function resizeFunc(evt){
+    document.body.style["background"] = `rgba(0,0,0,${backgroundOpacity})`;
+    // console.log("Resize finished");
+    let xScale   = window.innerWidth / 800 ;
+    let yScale   = window.innerHeight / 660 ;
+    let smallest = Math.min(xScale,yScale);
+    // console.log("window is now size ",window.innerWidth,window.innerHeight, xScale, yScale);
+    let scoreSpuds = document.querySelectorAll(".scaleMe");
+    scoreSpuds?.forEach(elem=>{
+        let originalWidth  = elem.getAttribute("data-original-size") || elem.getAttribute("data-original-width");
+        let originalHeight = elem.getAttribute("data-original-size") || elem.getAttribute("data-original-height");
+        let aspect         = elem.getAttribute("data-aspect");
+        let fontSize       = elem.getAttribute("data-font-size") || 0;
+        let margins        = elem.getAttribute("data-margins")?.split(",") || null;
+        let fontLine       = elem.getAttribute("data-line-height") || null;
+        let mode           = elem.getAttribute("data-scale") || "smallest";
+        if (mode=="smallest"){
+            elem.style.width  = elem.style["min-width" ] = `${originalWidth  * smallest}px`;
+            elem.style.height = elem.style["min-height"] = `${originalHeight * smallest}px`;
+            elem.style["font-size"] = `${fontSize * smallest}px`
+            if (fontLine) elem.style["line-height"] = `${fontLine * smallest}px`;
+        } else if (mode=="onlyHeight"){
+            elem.style.height = elem.style["min-height"] = `${originalHeight * smallest}px`;
+            elem.style["font-size"] = `${fontSize * smallest}px`
+            if (fontLine) elem.style["line-height"] = `${fontLine * smallest}px`;
+        } else if (mode=="textOnly"){
+            elem.style["font-size"] = `${fontSize * smallest}px`
+            if (fontLine) elem.style["line-height"] = `${fontLine * smallest}px`;
+        } else if (mode=="margins"){
+            // console.log("margins only",elem);
+        }
+        if (margins){
+            // t,l,b,r
+            const marginTxt = ["top","left","bottom","right"];
+            for (let i=0; i< margins.length; i++){
+                let value = margins[i];
+                if (value === null) {
+                    // delete elem.style[`margin-${marginTxt[i]}`];
+                    continue;
+                }
+                if (value == "auto") elem.style[`margin-${marginTxt[i]}`] = "auto";
+                // console.log( value , originalWidth , parseFloat(elem.style.width) );
+                if (i%2==0){
+                    // y
+                    let hVal = (value / originalHeight) * parseFloat(elem.style.height);
+                    if (!isNaN(hVal)) elem.style[`margin-${marginTxt[i]}`] = `${hVal}px`;
+                } else {
+                    // x
+                    let wVal = (value / originalWidth) * parseFloat(elem.style.width);
+                    if (!isNaN(wVal)) elem.style[`margin-${marginTxt[i]}`] = `${wVal}px`;
+                }
+            }
+        }
+    })
+}
+resizeFunc();
+// testCards();
