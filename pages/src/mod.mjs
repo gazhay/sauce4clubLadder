@@ -20,9 +20,9 @@ const riderHTML = (riderId,isHome) =>{
     let output =
     `<div class="rider ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
         <div class="score forHome scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
-        <div class="name forHome text-truncate">  </div>
+        <div class="name forHome text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly">  </div>
         <div class="position scaleMe" data-font-size="18" data-line-height="40" data-scale="textOnly"> ${thisPos} </div>
-        <div class="name forAway text-truncate">  </div>
+        <div class="name forAway text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly">  </div>
         <div class="score forAway scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
     </div>`;
     return output;
@@ -83,6 +83,8 @@ async function main() {
 main();
 
 function renderData(data){
+  resizeFunc();
+
     document.querySelectorAll(".position").forEach(e=>e.textContent="-1");
     let homeScore = 0;
     let awayScore = 0;
