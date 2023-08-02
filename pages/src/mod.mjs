@@ -3,15 +3,17 @@ import * as common from '/pages/src/common.mjs';
 const doc = document.documentElement;
 doc.classList.remove("frame");
 
-const DEBUG       = "";//"/debug";
+const DEBUG       = "/debug";
 var   USER        = 0;
 const SERVER      = (DEBUG!="")?"http://arwen.lan:5000":"https://ladder.cycleracing.club";
 
-var INTERESTEDIN = [];
+var INTERESTEDIN  = [];
 
 const scoreForPos = pos=>[12,10,8,7,6,5,4,3,2,1][pos-1]??0;
 const tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
+let riderCache    = [];
 
+// common.unsubscribe(`athlete/${athleteId}`, onAthleteData);
 
 var positionsCreated = 0;
 const riderHTML = (riderId,isHome) =>{
@@ -37,18 +39,36 @@ async function fetchFromLadder(){
     }
     myLadderData = myLadderData?.[0] || [];
 
+    let oldInterests = INTERESTEDIN;
     INTERESTEDIN = [...JSON.parse(myLadderData?.homeSignups),...JSON.parse(myLadderData?.awaySignups)];
     console.log("Found riders from ladder :", INTERESTEDIN, myLadderData);
-    renderOneOffs(myLadderData, INTERESTEDIN);
+    for (let subs of oldInterests){
+        common.unsubscribe(`athlete/${subs}`, onAthleteData);
+    }
+    for(let rider of INTERESTEDIN){
+        common.subscribe(`athlete/${rider}`, onAthleteData);
+    }
+    setupIndividuals(myLadderData, INTERESTEDIN);
     return true;
 }
+let ts = 0;
+function onAthleteData(data){
+    data.staleness = new Date();
+    let existing = riderCache.findIndex(a=>a.athleteId==data.athleteId);
+    if (existing==-1){
+        riderCache.push(data);
+    } else {
+        riderCache.splice(existing, 1, data);
+    }
+    const now = Date.now();
+    if (now - ts > 900) {
+        ts = now;
+        renderData();
+    }
+}
+
 async function main() {
-    // common.initInteractionListeners();
-    let refresh;
-    const setRefresh = () => {
-        refresh = 1 * 1000 - 100; // 1s
-    };
-    setRefresh();
+    console.log("main");
 
     common.subscribe('athlete/watching', async data => {
         // console.log(data.athleteId, USER);
@@ -63,33 +83,23 @@ async function main() {
 
     await fetchFromLadder();
 
-    let lastRefresh = 0;
-    common.subscribe('nearby', data => {
-        try{
-            data = data.filter(x => INTERESTEDIN.includes(x.athleteId));
-        } catch {}
-        data.sort( (a,b)=>{
-            a.state.eventDistance - b.state.eventDistance; // will mostly be correct since eventPosition doesn't exist ?!
-        })
-        // console.log("nearby",data);
-        const elapsed = Date.now() - lastRefresh;
-        if (elapsed >= refresh) {
-            lastRefresh = Date.now();
-            renderData(data);
-        }
-    });
+    for(let rider of INTERESTEDIN){
+        common.subscribe(`athlete/${rider}`, onAthleteData);
+    }
 }
 
 main();
 
-function renderData(data){
-  resizeFunc();
-
+function renderData(){
+    resizeFunc();
     document.querySelectorAll(".position").forEach(e=>e.textContent="-1");
     let homeScore = 0;
     let awayScore = 0;
     let position = 0;
-    for(let rider of data){
+    riderCache.sort( (a,b)=>{
+        a.state.eventDistance - b.state.eventDistance; // will mostly be correct since eventPosition doesn't exist ?!
+    })
+    for(let rider of riderCache){
         // console.log("Rendering for ", rider.athleteId);
         let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
         if (!domForRider){
@@ -102,6 +112,12 @@ function renderData(data){
         domForRider.querySelectorAll(".name").forEach(e=>e.textContent=rider.athlete.sanitizedFullname);
         domForRider.style.position = "absolute";
         domForRider.style.top = `${tops[riderPos]}px`;
+        if (Date.now() - rider.staleness > 10 * 1000){
+            // 10 seconds delay
+            domForRider.classList.add("delayed");
+        } else {
+            domForRider.classList.remove("delayed");
+        }
     }
     document.querySelectorAll(".rider").forEach(e=>{
         if (e.querySelector(".position").textContent=="-1"){
@@ -136,7 +152,7 @@ function renderData(data){
         awayScoreDom.classList.remove("losing");
     }
 }
-function renderOneOffs(data, ids){
+function setupIndividuals(data, ids){
     document.querySelector(".SplashHomeTeam").textContent = data.homeTeamName;
     document.querySelector(".SplashAwayTeam").textContent = data.awayTeamName;
     document.querySelector(".homeScore").textContent = 0;
@@ -155,6 +171,7 @@ function renderOneOffs(data, ids){
     }
 }
 
+// Debug stuff
 function testCards(){
     document.querySelector(".SplashHomeTeam").textContent = "My Home Team";
     document.querySelector(".SplashAwayTeam").textContent = "My Away Team";
@@ -172,26 +189,7 @@ function testCards(){
     }
 }
 
-var homeRiders = [];
-var awayRiders = [];
-var riderNum   = 0;
-function renderRiders(){
-    let homeRider = homeRiders?.[riderNum] || {ZPName:"",club:"",ZRRank:""};
-    let awayRider = awayRiders?.[riderNum] || {ZPName:"",club:"",ZRRank:""};
-    riderNum ++;
-    if (riderNum>=5) riderNum=0;
-    let domHome = document.querySelector(".homeRider");
-    let domAway = document.querySelector(".awayRider");
-    domHome.classList.add("riderHide");
-    domAway.classList.add("riderHide");
-    setTimeout( _=>{
-        domHome.innerHTML = `${homeRider.ZPName} // <span class="small">${homeRider.club}</span> // ${homeRider.ZRRank}`;
-        domAway.innerHTML = `${awayRider.ZPName} // <span class="small">${awayRider.club}</span> // ${homeRider.ZRRank}`;
-        domHome.classList.remove("riderHide");
-        domAway.classList.remove("riderHide");
-    }, 550);
-}
-
+// UI Stuff
 var backgroundOpacity = 0;
 window.addEventListener('keydown', (e)=>{
     if (e.isComposing || e.keyCode === 229) return;
