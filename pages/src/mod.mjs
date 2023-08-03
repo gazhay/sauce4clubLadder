@@ -3,7 +3,7 @@ import * as common from '/pages/src/common.mjs';
 const doc = document.documentElement;
 doc.classList.remove("frame");
 
-const DEBUG       = "/debug";
+const DEBUG       = "";//"debug";
 var   USER        = 0;
 const SERVER      = (DEBUG!="")?"http://arwen.lan:5000":"https://ladder.cycleracing.club";
 
@@ -13,7 +13,8 @@ const scoreForPos = pos=>[12,10,8,7,6,5,4,3,2,1][pos-1]??0;
 const tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
 let riderCache    = [];
 
-// common.unsubscribe(`athlete/${athleteId}`, onAthleteData);
+let riderMaxes    = {};
+let finishers     = [];
 
 var positionsCreated = 0;
 const riderHTML = (riderId,isHome) =>{
@@ -60,6 +61,21 @@ function onAthleteData(data){
     } else {
         riderCache.splice(existing, 1, data);
     }
+    // Not convinced this won't break when we change watchers.
+    if (!data.state.eventDistance){ data.state.eventDistance = riderMaxes?.[data.athleteId] || 0; }
+    // Thats a bit circular but should cover the edge cases.
+    if (!riderMaxes[data.athleteId] || riderMaxes[data.athleteId]<data.state.eventDistance) riderMaxes[data.athleteId] = data.state.eventDistance;
+    if (!finishers.includes(data.athleteId)){
+        if (
+            (data.state.progress>=100) // might be lucky to grab data at 100%
+            || ((!data.state.progress || data.state.progress==0) && (riderMaxes[data.athleteId]>0))
+        ){
+            if (!finishers.includes(data.athleteId)){
+                finishers.push(data.athleteId);
+                data.finished = true;
+            }
+        }
+    }
     const now = Date.now();
     if (now - ts > 900) {
         ts = now;
@@ -68,15 +84,11 @@ function onAthleteData(data){
 }
 
 async function main() {
-    console.log("main");
-
     common.subscribe('athlete/watching', async data => {
-        // console.log(data.athleteId, USER);
         let olduser = USER;
         if (data.athleteId != USER){
             USER         = data.athleteId;
             console.log("Switched to ",USER);
-            // INTERESTEDIN = [];
             if (USER!=0) await fetchFromLadder();
         }
     });
@@ -87,7 +99,6 @@ async function main() {
         common.subscribe(`athlete/${rider}`, onAthleteData);
     }
 }
-
 main();
 
 function renderData(){
@@ -95,9 +106,13 @@ function renderData(){
     document.querySelectorAll(".position").forEach(e=>e.textContent="-1");
     let homeScore = 0;
     let awayScore = 0;
-    let position = 0;
+    let position  = 0;
     riderCache.sort( (a,b)=>{
-        a.state.eventDistance - b.state.eventDistance; // will mostly be correct since eventPosition doesn't exist ?!
+        let aVal = a.state.eventDistance;
+        let bVal = b.state.eventDistance;
+        if (a.finished) aVal = 500000000+(10-finishers.indexOf(a.athleteId));
+        if (b.finsihed) bVal = 500000000+(10-finishers.indexOf(b.athleteId)); //hack for finished riders
+        return aVal - bVal; // will mostly be correct since eventPosition doesn't exist ?!
     })
     for(let rider of riderCache){
         // console.log("Rendering for ", rider.athleteId);

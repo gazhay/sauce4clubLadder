@@ -1,6 +1,16 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+Changelog 3 Aug 23
+------------------
+*EXPERIMENTAL MODE*
+
+I have reworked the mod to use different sauce api endpoints.
+This means there is no guarantee this version of the mod works *at all*.
+
+I advise you to avoid this release until I've tested it in a ladder match.
+Specifically some code added to catch the finish of the race - which is hacky.
+
 Changelog 1 Aug 23
 ------------------
 Made resizing work (a bit)
