@@ -10,7 +10,7 @@ const SERVER      = (DEBUG!="")?"http://arwen.lan:5000":"https://ladder.cyclerac
 var INTERESTEDIN  = [];
 
 const scoreForPos = pos=>[12,10,8,7,6,5,4,3,2,1][pos-1]??0;
-const tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
+var   tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
 let riderCache    = [];
 
 let riderMaxes    = {};
@@ -112,7 +112,7 @@ function renderData(){
         let bVal = b.state.eventDistance;
         if (a.finished) aVal = 500000000+(10-finishers.indexOf(a.athleteId));
         if (b.finsihed) bVal = 500000000+(10-finishers.indexOf(b.athleteId)); //hack for finished riders
-        return aVal - bVal; // will mostly be correct since eventPosition doesn't exist ?!
+        return bVal - aVal; // will mostly be correct since eventPosition doesn't exist ?!
     })
     for(let rider of riderCache){
         // console.log("Rendering for ", rider.athleteId);
@@ -232,7 +232,7 @@ function resizeFunc(evt){
     let smallest = Math.min(xScale,yScale);
     // 45 = 600-100 / 10
     let onePos = ((window.innerHeight-100)/10);
-    Array.from(Array(12).keys()).map( (a,i)=>( 10+ ( onePos *(i-1)) ));
+    tops = Array.from(Array(12).keys()).map( (a,i)=>( 10+ ( onePos *(i-1)) ));
     // console.log("window is now size ",window.innerWidth,window.innerHeight, xScale, yScale);
     let scoreSpuds = document.querySelectorAll(".scaleMe");
     scoreSpuds?.forEach(elem=>{
