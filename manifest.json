@@ -4,7 +4,7 @@
     "description": "Attempt to live score matches",
     "author": "Gareth Hay",
     "website_url": "https://ladder.cycleracing.club",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "content_js": [],
     "content_css": [],
     "web_root": "pages",
