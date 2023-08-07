@@ -1,7 +1,7 @@
 sauce4zwift Club Ladder Live Score
 ========
 
-Changelog 7th Aug 23
+Changelog 7th Aug 23 v 0.0.2
 --------------------
 
 * Initial testing complete
