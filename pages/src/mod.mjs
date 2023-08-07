@@ -228,8 +228,11 @@ function resizeFunc(evt){
     // console.log("Resize finished");
     let xScale   = window.innerWidth / 800 ;
     let yScale   = window.innerHeight / 660 ;
-    document.querySelector(".scoreList").style.height = `${window.innerHeight-100}px`; // topbar is 100px
+    // document.querySelector(".scoreList").style.height = `${window.innerHeight-100}px`; // topbar is 100px
     let smallest = Math.min(xScale,yScale);
+    // 45 = 600-100 / 10
+    let onePos = ((window.innerHeight-100)/10);
+    Array.from(Array(12).keys()).map( (a,i)=>( 10+ ( onePos *(i-1)) ));
     // console.log("window is now size ",window.innerWidth,window.innerHeight, xScale, yScale);
     let scoreSpuds = document.querySelectorAll(".scaleMe");
     scoreSpuds?.forEach(elem=>{
