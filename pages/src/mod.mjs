@@ -228,6 +228,7 @@ function resizeFunc(evt){
     // console.log("Resize finished");
     let xScale   = window.innerWidth / 800 ;
     let yScale   = window.innerHeight / 660 ;
+    document.querySelector(".scoreList").style.height = `${window.innerHeight-100}px`; // topbar is 100px
     let smallest = Math.min(xScale,yScale);
     // console.log("window is now size ",window.innerWidth,window.innerHeight, xScale, yScale);
     let scoreSpuds = document.querySelectorAll(".scaleMe");
