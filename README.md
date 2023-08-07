@@ -1,6 +1,14 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+Changelog 7th Aug 23
+--------------------
+
+* Initial testing complete
+* Fixed ordering bug, slowed down updates to nearer 2s as 1s was too quick to get all athletes data refreshed.
+* Fixed resize bug where vertical items scaled but wouldn't "bunch up"
+* Still Experimental status, but should at least work.
+
 Changelog 3 Aug 23
 ------------------
 *EXPERIMENTAL MODE*
