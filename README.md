@@ -1,6 +1,12 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+Changelog 15th Sepc 23 v 0.0.3
+------------------------------
+
+* Fixed situations where more than 5 were signed in and one of the riders was 6th in the list.
+* "Finish" situations are still not handled well - becuase of riders leaving the race at the finish line.
+
 Changelog 7th Aug 23 v 0.0.2
 --------------------
 

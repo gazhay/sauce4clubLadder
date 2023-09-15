@@ -1,5 +1,7 @@
 import * as common from '/pages/src/common.mjs';
 
+import got from './got';
+
 const doc = document.documentElement;
 doc.classList.remove("frame");
 
@@ -21,7 +23,7 @@ const riderHTML = (riderId,isHome) =>{
     if (positionsCreated>=10) return "";
     let thisPos = ++positionsCreated;
     let output =
-    `<div class="rider ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
+    `<div class="rider ${positionsCreated>=10?"d-none":""} ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
         <div class="score forHome scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
         <div class="name forHome text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly">  </div>
         <div class="position scaleMe" data-font-size="18" data-line-height="40" data-scale="textOnly"> ${thisPos} </div>
@@ -132,6 +134,11 @@ function renderData(){
             domForRider.classList.add("delayed");
         } else {
             domForRider.classList.remove("delayed");
+        }
+        if (riderPos>=10){
+            domForRider.classList.add("d-none");
+        } else {
+            domForRider.classList.remove("d-none");
         }
     }
     document.querySelectorAll(".rider").forEach(e=>{
