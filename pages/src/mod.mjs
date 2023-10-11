@@ -1,7 +1,5 @@
 import * as common from '/pages/src/common.mjs';
 
-import got from './got';
-
 const doc = document.documentElement;
 doc.classList.remove("frame");
 
