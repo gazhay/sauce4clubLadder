@@ -18,7 +18,7 @@ let finishers     = [];
 
 var positionsCreated = 0;
 const riderHTML = (riderId,isHome) =>{
-    if (positionsCreated>=10) return "";
+    // if (positionsCreated>=10) return "";
     let thisPos = ++positionsCreated;
     let output =
     `<div class="rider ${positionsCreated>=10?"d-none":""} ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
