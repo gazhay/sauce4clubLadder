@@ -9,7 +9,8 @@ const SERVER      = (DEBUG!="")?"http://arwen.lan:5000":"https://ladder.cyclerac
 
 var INTERESTEDIN  = [];
 
-const scoreForPos = pos=>[12,10,8,7,6,5,4,3,2,1][pos-1]??0;
+var scoreForPos = pos=>[12,10,8,7,6,5,4,3,2,1][pos-1]??0;
+
 var   tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
 let riderCache    = [];
 
@@ -39,6 +40,13 @@ async function fetchFromLadder(){
         return null;
     }
     myLadderData = myLadderData?.[0] || [];
+
+    // Now we have to get the points structure for ladder matches
+    await fetch(`${SERVER}/api/pointsStructure`).then(response=>response.json()).then(scores=>{
+        if (scores && scores?.length>0){
+            scoreForPos = pos=>[...scores][pos-1]??0;
+        }
+    }).catch(err=>{console.log("Failed to fetch points",err)});
 
     let oldInterests = INTERESTEDIN;
     INTERESTEDIN = [...JSON.parse(myLadderData?.homeSignups),...JSON.parse(myLadderData?.awaySignups)];
