@@ -1,6 +1,11 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+Changelog December 2023
+-----------------------
+
+* Added code to make sure scoring is the current in use system.
+
 Changelog 15th Sepc 23 v 0.0.3
 ------------------------------
 
