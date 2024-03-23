@@ -1,6 +1,13 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+Changes v0.0.4 - March 2024
+---------------------------
+
+* Make the teams use club colours. (This may be horrible for some teams)
+* added experimental "gap" feature - H key toggles on off **untested**
+* added a bit of testing for "finished" state.
+
 Changelog December 2023
 -----------------------
 

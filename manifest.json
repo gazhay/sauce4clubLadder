@@ -1,26 +1,26 @@
 {
     "manifest_version": 1,
-    "name": "Club Ladder Live",
-    "description": "Attempt to live score matches",
-    "author": "Gareth Hay",
-    "website_url": "https://ladder.cycleracing.club",
-    "version": "0.0.3",
-    "content_js": [],
-    "content_css": [],
-    "web_root": "pages",
-    "windows": [{
-        "file": "pages/mod.html",
-        "id": "ladder-live",
-        "name": "Club Ladder Live",
-        "description": "Live score for ladder events",
+    "name"            : "Club Ladder Live",
+    "description"     : "Proof-of-concept live score",
+    "author"          : "Gareth Hay",
+    "website_url"     : "https://ladder.cycleracing.club",
+    "version"         : "0.0.4",
+    "content_js"      : [],
+    "content_css"     : [],
+    "web_root"        : "pages",
+    "windows"         : [{
+        "file"          : "pages/mod.html",
+        "id"            : "ladder-live",
+        "name"          : "Club Ladder Live",
+        "description"   : "Live score for ladder events",
         "always_visible": true,
-        "overlay": true,
-        "frame": false,
+        "overlay"       : true,
+        "frame"         : false,
         "default_bounds": {
-            "width": 800,
+            "width" : 800,
             "height": 660,
-            "x": 100,
-            "y": -100
+            "x"     : 100,
+            "y"     : -100
         }
     }]
 }

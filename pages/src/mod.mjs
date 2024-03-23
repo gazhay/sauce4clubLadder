@@ -6,6 +6,9 @@ doc.classList.remove("frame");
 const DEBUG       = "";//"debug";
 var   USER        = 0;
 const SERVER      = (DEBUG!="")?"http://arwen.lan:5000":"https://ladder.cycleracing.club";
+var   GAPPY       = false;
+
+console.log("ClubLadder mod ",DEBUG, SERVER);
 
 var INTERESTEDIN  = [];
 
@@ -16,6 +19,12 @@ let riderCache    = [];
 
 let riderMaxes    = {};
 let finishers     = [];
+
+const contrastColor       = (incol,darkColor="#000",lightColor="#fff")=>{
+    const threshold = 186;
+    if (incol.startsWith("#")) incol = hexToRgb(incol);
+    return (((incol[0] * 0.299) + (incol[1] * 0.587) + (incol[2] * 0.114)) > threshold) ? darkColor : lightColor;
+}
 
 var positionsCreated = 0;
 const riderHTML = (riderId,isHome) =>{
@@ -32,7 +41,7 @@ const riderHTML = (riderId,isHome) =>{
     return output;
 }
 async function fetchFromLadder(){
-    if (USER==0) return null;
+    if (USER==0 && DEBUG=="") return null;
     console.log("Setting up",`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`);
     let myLadderData = await fetch(`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`).then(response=>response.json());
     if (!myLadderData || myLadderData.length==0){
@@ -58,8 +67,19 @@ async function fetchFromLadder(){
         common.subscribe(`athlete/${rider}`, onAthleteData);
     }
     setupIndividuals(myLadderData, INTERESTEDIN);
+
+    setupClubColors(myLadderData);
+
     return true;
 }
+
+function setupClubColors( data ){
+    if (data?.homeClub?.color1     ) document.documentElement.style.setProperty("--ladder-secondary-bg", data.homeClub.color1);
+    if (data?.homeClub?.textColor1 ) document.documentElement.style.setProperty("--homeText", data.homeClub.textColor1);
+    if (data?.awayClub?.color1     ) document.documentElement.style.setProperty("--ladder-tertiary-bg" , data.awayClub.color1);
+    if (data?.homeClub?.textColor1 ) document.documentElement.style.setProperty("--awayText" , data.awayClub.textColor1);
+}
+
 let ts = 0;
 function onAthleteData(data){
     data.staleness = new Date();
@@ -115,6 +135,7 @@ function renderData(){
     let homeScore = 0;
     let awayScore = 0;
     let position  = 0;
+    let lastDist  = 0;
     riderCache.sort( (a,b)=>{
         let aVal = a.state.eventDistance;
         let bVal = b.state.eventDistance;
@@ -146,6 +167,19 @@ function renderData(){
         } else {
             domForRider.classList.remove("d-none");
         }
+        if (rider.finsihed){
+            domForRider.classList.add("finsihed");
+        } else {
+            domForRider.classList.remove("finsihed");
+        }
+        if (GAPPY){
+            if (lastDist>0 && lastDist-rider.state.eventDistance > 500){
+                domForRider.classList.add("gapped");
+            } else {
+                domForRider.classList.remove("gapped");
+            }
+            lastDist = rider.state.eventDistance;
+        }
     }
     document.querySelectorAll(".rider").forEach(e=>{
         if (e.querySelector(".position").textContent=="-1"){
@@ -158,8 +192,8 @@ function renderData(){
             if (e.classList.contains("awayRider")) awayScore += ~~(e.querySelector(".score").textContent);
         }
     });
-    let homeScoreDom = document.querySelector(".homeScore");
-    let awayScoreDom = document.querySelector(".awayScore");
+    let homeScoreDom = document.querySelector(".SplashHomeTeam");
+    let awayScoreDom = document.querySelector(".SplashAwayTeam");
 
     awayScoreDom.textContent = awayScore;
     homeScoreDom.textContent = homeScore;
@@ -231,6 +265,9 @@ window.addEventListener('keydown', (e)=>{
         backgroundOpacity -= 0.10;
         backgroundOpacity = Math.min(1,backgroundOpacity);
         document.body.style["background"] = `rgba(0,0,0,${backgroundOpacity})`;
+    } else if (e.code == "KeyH"){
+        GAPPY = !GAPPY;
+        console.log("Gap mode ",GAPPY);
     }
 });
 

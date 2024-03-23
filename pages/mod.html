@@ -6,6 +6,11 @@
         <script src="src/mod.mjs" type="module"></script>
         <link rel="stylesheet" href="css/ladder-ripped.css">
         <style media="screen">
+        :root{
+            --winnercolor : rgba(237, 93, 36,1);
+            --homeText : black;
+            --awayText : black;
+        }
             html{
                 width         : 800px;
                 height        : 660px;
@@ -113,8 +118,16 @@
                 justify-content: center;
                 align-items: center;
             }
-            .homeScore{ margin-right : 0; background : var(--ladder-secondary-bg); }
-            .awayScore{ margin-left  : 0; background : var(--ladder-tertiary-bg); }
+            .homeScore{
+                margin-right : 0;
+                background : var(--ladder-secondary-bg);
+                color : var(--homeText);
+            }
+            .awayScore{
+                margin-left  : 0;
+                background : var(--ladder-tertiary-bg);
+                color : var(--awayText);
+            }
             .topBar section.homeScore{ font-size: 40px; }
             .topBar section.awayScore{ font-size: 40px; }
 
@@ -189,10 +202,11 @@
                 display:none;
             }
             .winning{
-                color : var(--ladder-primary);
+                color : var(--winnercolor);
+                font-weight : bold;
+                -webkit-text-stroke: 1px rgba(0,0,0,0.3);
             }
             .losing{
-                color : var(ladder-text-bg);
             }
             .move{ -webkit-app-region: drag; }
 
@@ -216,6 +230,12 @@
                 opacity : 0.5;
             }
 
+            .gapped{
+                border-top : 1px solid rgba(237, 194, 85,0.6);
+            }
+            .finished{
+                border: 2px solid rgba(220,220,220,1);
+            }
         </style>
     </head>
     <body class="move">
