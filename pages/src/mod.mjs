@@ -192,8 +192,8 @@ function renderData(){
             if (e.classList.contains("awayRider")) awayScore += ~~(e.querySelector(".score").textContent);
         }
     });
-    let homeScoreDom = document.querySelector(".SplashHomeTeam");
-    let awayScoreDom = document.querySelector(".SplashAwayTeam");
+    let homeScoreDom = document.querySelector(".homeScore");//.SplashHomeTeam");
+    let awayScoreDom = document.querySelector(".awayScore");//SplashAwayTeam");
 
     awayScoreDom.textContent = awayScore;
     homeScoreDom.textContent = homeScore;
