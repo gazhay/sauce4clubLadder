@@ -1,6 +1,11 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+Changes v0.0.5 - May 2024
+-------------------------
+* Made team text color contrast with background so we can see it.
+* Reworked finish code to check for leaving an event [untested]
+
 Changes v0.0.4 - March 2024
 ---------------------------
 

@@ -7,6 +7,7 @@ const DEBUG       = "";//"debug";
 var   USER        = 0;
 const SERVER      = (DEBUG!="")?"http://arwen.lan:5000":"https://ladder.cycleracing.club";
 var   GAPPY       = false;
+var   EVENT       = null;
 
 console.log("ClubLadder mod ",DEBUG, SERVER);
 
@@ -92,6 +93,7 @@ function setupClubColors( data ){
 
 let ts = 0;
 function onAthleteData(data){
+    // Any rider
     data.staleness = new Date();
     let existing = riderCache.findIndex(a=>a.athleteId==data.athleteId);
     if (existing==-1){
@@ -103,16 +105,15 @@ function onAthleteData(data){
     if (!data.state.eventDistance){ data.state.eventDistance = riderMaxes?.[data.athleteId] || 0; }
     // Thats a bit circular but should cover the edge cases.
     if (!riderMaxes[data.athleteId] || riderMaxes[data.athleteId]<data.state.eventDistance) riderMaxes[data.athleteId] = data.state.eventDistance;
-    if (!finishers.includes(data.athleteId)){
-        if (
-            (data.state.progress>=100) // might be lucky to grab data at 100%
-            || ((!data.state.progress || data.state.progress==0) && (riderMaxes[data.athleteId]>0))
-        ){
-            if (!finishers.includes(data.athleteId)){
-                finishers.push(data.athleteId);
-                data.finished = true;
-            }
-        }
+    if (!EVENT && data.state?.eventSubgroupId) EVENT = data.state.eventSubgroupId; // Set global EVENT;
+    if (data.state?.eventSubgroupId != EVENT) try {
+        // Should be null before an event,
+        // Should be different after EVENT has been set globally and then we are unset.
+        finishers.push(data.athleteId);
+        let myFinisher = riderCache.findIndex(a=>a.athleteId==data.athleteId);
+        if (myFinisher>-1) riderCache[myFinisher].finished = true;
+    } catch (e){
+        console.error(e);
     }
     const now = Date.now();
     if (now - ts > 1900) {
@@ -166,7 +167,7 @@ function renderData(){
         domForRider.querySelectorAll(".name").forEach(e=>e.textContent=rider.athlete.sanitizedFullname);
         domForRider.style.position = "absolute";
         domForRider.style.top = `${tops[riderPos]}px`;
-        if (Date.now() - rider.staleness > 10 * 1000){
+        if (Date.now() - rider.staleness > 10 * 1000 ){
             // 10 seconds delay
             domForRider.classList.add("delayed");
         } else {
@@ -178,9 +179,9 @@ function renderData(){
             domForRider.classList.remove("d-none");
         }
         if (rider.finsihed){
-            domForRider.classList.add("finsihed");
+            domForRider.classList.add("finished");
         } else {
-            domForRider.classList.remove("finsihed");
+            domForRider.classList.remove("finished");
         }
         if (GAPPY){
             if (lastDist>0 && lastDist-rider.state.eventDistance > 500){
