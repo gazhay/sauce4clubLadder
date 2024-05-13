@@ -20,10 +20,19 @@ let riderCache    = [];
 let riderMaxes    = {};
 let finishers     = [];
 
-const contrastColor       = (incol,darkColor="#000",lightColor="#fff")=>{
+const ColorDark  = "#000";
+const ColorLight = "#fff";
+
+const contrastColor       = (incol,darkColor=ColorDark,lightColor=ColorLight)=>{
     const threshold = 186;
     if (incol.startsWith("#")) incol = hexToRgb(incol);
     return (((incol[0] * 0.299) + (incol[1] * 0.587) + (incol[2] * 0.114)) > threshold) ? darkColor : lightColor;
+}
+function getContrastingTextColor(backgroundColor, textColor) {
+    const isDarkBackground = contrastColor(backgroundColor) === ColorDark;
+    const isDarkText       = contrastColor(textColor      ) === ColorDark;
+    if (isDarkBackground === isDarkText) { return isDarkBackground ? ColorLight : ColorDark; }
+    return textColor;
 }
 
 var positionsCreated = 0;
@@ -75,9 +84,10 @@ async function fetchFromLadder(){
 
 function setupClubColors( data ){
     if (data?.homeClub?.color1     ) document.documentElement.style.setProperty("--ladder-secondary-bg", data.homeClub.color1);
-    if (data?.homeClub?.textColor1 ) document.documentElement.style.setProperty("--homeText", data.homeClub.textColor1);
     if (data?.awayClub?.color1     ) document.documentElement.style.setProperty("--ladder-tertiary-bg" , data.awayClub.color1);
-    if (data?.homeClub?.textColor1 ) document.documentElement.style.setProperty("--awayText" , data.awayClub.textColor1);
+
+    if (data?.homeClub?.textColor1 ) document.documentElement.style.setProperty("--homeText" , getContrastingTextColor( data.homeClub.color1, data.homeClub.textColor1));
+    if (data?.homeClub?.textColor1 ) document.documentElement.style.setProperty("--awayText" , getContrastingTextColor( data.awayClub.color1, data.awayClub.textColor1));
 }
 
 let ts = 0;
