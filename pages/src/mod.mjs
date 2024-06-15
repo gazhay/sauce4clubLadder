@@ -20,19 +20,43 @@ let riderCache    = [];
 
 let riderMaxes    = {};
 let finishers     = [];
-
-const ColorDark  = "#000";
+const ColorDark = "#000";
 const ColorLight = "#fff";
 
-const contrastColor       = (incol,darkColor=ColorDark,lightColor=ColorLight)=>{
-    const threshold = 186;
-    if (incol.startsWith("#")) incol = hexToRgb(incol);
-    return (((incol[0] * 0.299) + (incol[1] * 0.587) + (incol[2] * 0.114)) > threshold) ? darkColor : lightColor;
+function hexToRgb(hex) {
+    const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
+    ] : null;
 }
+
+const contrastColor = (incol, darkColor = ColorDark, lightColor = ColorLight) => {
+    const threshold = 186;
+    let rgb;
+
+    if (typeof incol === 'string' && incol.startsWith("#")) {
+        rgb = hexToRgb(incol);
+    } else if (Array.isArray(incol) && incol.length === 3) {
+        rgb = incol;
+    } else {
+        throw new Error("Invalid color format. Please provide a hex color or an RGB array.");
+    }
+
+    return (((rgb[0] * 0.299) + (rgb[1] * 0.587) + (rgb[2] * 0.114)) > threshold) ? darkColor : lightColor;
+};
+
 function getContrastingTextColor(backgroundColor, textColor) {
+    console.log("backgroundColor", backgroundColor, "text", textColor);
     const isDarkBackground = contrastColor(backgroundColor) === ColorDark;
-    const isDarkText       = contrastColor(textColor      ) === ColorDark;
-    if (isDarkBackground === isDarkText) { return isDarkBackground ? ColorLight : ColorDark; }
+    const isDarkText = contrastColor(textColor) === ColorDark;
+
+    if (isDarkBackground === isDarkText) {
+        return isDarkBackground ? ColorLight : ColorDark;
+    }
     return textColor;
 }
 
