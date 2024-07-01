@@ -20,8 +20,8 @@ let riderCache    = [];
 
 let riderMaxes    = {};
 let finishers     = [];
-const ColorDark = "#000";
-const ColorLight = "#fff";
+const ColorDark = "#ffffff";
+const ColorLight = "#000000";
 
 function hexToRgb(hex) {
     const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -111,8 +111,20 @@ function setupClubColors( data ){
     if (data?.homeClub?.color1     ) document.documentElement.style.setProperty("--ladder-secondary-bg", data.homeClub.color1);
     if (data?.awayClub?.color1     ) document.documentElement.style.setProperty("--ladder-tertiary-bg" , data.awayClub.color1);
 
-    if (data?.homeClub?.textColor1 ) document.documentElement.style.setProperty("--homeText" , getContrastingTextColor( data.homeClub.color1, data.homeClub.textColor1));
-    if (data?.homeClub?.textColor1 ) document.documentElement.style.setProperty("--awayText" , getContrastingTextColor( data.awayClub.color1, data.awayClub.textColor1));
+    if (data?.homeClub?.textColor1 ) {
+      let homeScore = document.querySelector(".homeScore");
+      let homeText  = getContrastingTextColor( data.homeClub.color1, data.homeClub.textColor1);
+      console.log(data.homeClub.color1, data.homeClub.textColor1, homeText);
+      homeScore.style.setProperty("--homeText", homeText);
+      document.documentElement.style.setProperty("--homeText", homeText);
+    }
+    if (data?.awayClub?.textColor1 ) {
+      let awayScore = document.querySelector(".awayScore");
+      let awayText  = getContrastingTextColor( data.awayClub.color1, data.awayClub.textColor1);
+      console.log(data.awayClub.color1, data.awayClub.textColor1, awayText);
+      awayScore.style.setProperty("--awayText", awayText);
+      document.documentElement.style.setProperty("--awayText", awayText);
+    }
 }
 
 let ts = 0;
