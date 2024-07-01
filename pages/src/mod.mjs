@@ -117,6 +117,7 @@ function setupClubColors( data ){
       console.log(data.homeClub.color1, data.homeClub.textColor1, homeText);
       homeScore.style.setProperty("--homeText", homeText);
       document.documentElement.style.setProperty("--homeText", homeText);
+      document.querySelectorAll(".homeRider")?.forEach(cell=>cell.style.setProperty("--homeText", homeText));
     }
     if (data?.awayClub?.textColor1 ) {
       let awayScore = document.querySelector(".awayScore");
@@ -124,6 +125,7 @@ function setupClubColors( data ){
       console.log(data.awayClub.color1, data.awayClub.textColor1, awayText);
       awayScore.style.setProperty("--awayText", awayText);
       document.documentElement.style.setProperty("--awayText", awayText);
+      document.querySelectorAll(".awayRider")?.forEach(cell=>cell.style.setProperty("--awayText", awayText));
     }
 }
 
@@ -178,6 +180,7 @@ main();
 
 function renderData(){
     resizeFunc();
+    setupClubColors();
     document.querySelectorAll(".position").forEach(e=>e.textContent="-1");
     let homeScore = 0;
     let awayScore = 0;
