@@ -50,31 +50,74 @@ const contrastColor = (incol, darkColor = ColorDark, lightColor = ColorLight) =>
 };
 
 function getContrastingTextColor(backgroundColor, textColor) {
-    console.log("backgroundColor", backgroundColor, "text", textColor);
-    const isDarkBackground = contrastColor(backgroundColor) === ColorDark;
-    const isDarkText = contrastColor(textColor) === ColorDark;
+  // Calculate the relative luminance of the background and text colors
+  const backgroundLuminance = calculateLuminance(backgroundColor);
+  const textLuminance = calculateLuminance(textColor);
 
-    if (isDarkBackground === isDarkText) {
-        return isDarkBackground ? ColorLight : ColorDark;
-    }
-    return textColor;
+  // Determine the appropriate contrasting color
+  const luminanceDiff = Math.abs(backgroundLuminance - textLuminance);
+  return luminanceDiff > 0.5 ? textColor : invertColor(textColor);
 }
 
+function calculateLuminance(hexColor) {
+  const r = parseInt(hexColor.slice(1, 3), 16) / 255;
+  const g = parseInt(hexColor.slice(3, 5), 16) / 255;
+  const b = parseInt(hexColor.slice(5, 7), 16) / 255;
+
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance;
+}
+
+function invertColor(hexColor) {
+  const r = 255 - parseInt(hexColor.slice(1, 3), 16);
+  const g = 255 - parseInt(hexColor.slice(3, 5), 16);
+  const b = 255 - parseInt(hexColor.slice(5, 7), 16);
+
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+const fakeClubs = {homeClub:
+  {
+    id          : 1,
+    zwiftClubId : 168,
+    name        : 'Team Type 1',
+    remoteAvatar: null,
+    color1      : '#5684b6',
+    color2      : '#254076',
+    textColor1  : '#ffffff',
+    textColor2  : '#254076',
+}, awayClub:
+  {
+    id          : 66,
+    zwiftClubId : 161,
+    name        : 'ZSUN Racing',
+    remoteAvatar: null,
+    color1      : '#1c1300',
+    color2      : '#ffffff',
+    textColor1  : '#ffd808',
+    textColor2  : '#ffffff',
+  }
+};
+
 var positionsCreated = 0;
-const riderHTML = (riderId,isHome) =>{
+const riderHTML = (riderId,isHome, fakeNames=false) =>{
     // if (positionsCreated>=10) return "";
     let thisPos = ++positionsCreated;
     let output =
     `<div class="rider ${positionsCreated>=10?"d-none":""} ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
         <div class="score forHome scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
-        <div class="name forHome text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly">  </div>
+        <div class="name forHome text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
         <div class="position scaleMe" data-font-size="18" data-line-height="40" data-scale="textOnly"> ${thisPos} </div>
-        <div class="name forAway text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly">  </div>
+        <div class="name forAway text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
         <div class="score forAway scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
     </div>`;
     return output;
 }
-async function fetchFromLadder(){
+async function fetchFromLadder(fake=false){
+    if (fake){
+        testCards();
+        return setupClubColors(fakeClubs);
+    }
     if (USER==0 && DEBUG=="") return null;
     console.log("Setting up",`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`);
     let myLadderData = await fetch(`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`).then(response=>response.json());
@@ -107,26 +150,29 @@ async function fetchFromLadder(){
     return true;
 }
 
-function setupClubColors( data ){
-    if (data?.homeClub?.color1     ) document.documentElement.style.setProperty("--ladder-secondary-bg", data.homeClub.color1);
-    if (data?.awayClub?.color1     ) document.documentElement.style.setProperty("--ladder-tertiary-bg" , data.awayClub.color1);
+var homeTextColor = null;
+var awayTextColor = null;
+function setupClubColors(data) {
+  if (data?.homeClub?.color1) { document.documentElement.style.setProperty("--ladder-secondary-bg", data.homeClub.color1); }
+  if (data?.awayClub?.color1) { document.documentElement.style.setProperty("--ladder-tertiary-bg", data.awayClub.color1); }
 
-    if (data?.homeClub?.textColor1 ) {
-      let homeScore = document.querySelector(".homeScore");
-      let homeText  = getContrastingTextColor( data.homeClub.color1, data.homeClub.textColor1);
-      console.log(data.homeClub.color1, data.homeClub.textColor1, homeText);
-      homeScore.style.setProperty("--homeText", homeText);
-      document.documentElement.style.setProperty("--homeText", homeText);
-      document.querySelectorAll(".homeRider")?.forEach(cell=>cell.style.setProperty("--homeText", homeText));
-    }
-    if (data?.awayClub?.textColor1 ) {
-      let awayScore = document.querySelector(".awayScore");
-      let awayText  = getContrastingTextColor( data.awayClub.color1, data.awayClub.textColor1);
-      console.log(data.awayClub.color1, data.awayClub.textColor1, awayText);
-      awayScore.style.setProperty("--awayText", awayText);
-      document.documentElement.style.setProperty("--awayText", awayText);
-      document.querySelectorAll(".awayRider")?.forEach(cell=>cell.style.setProperty("--awayText", awayText));
-    }
+  if (data?.homeClub?.textColor1) {
+    let homeScore = document.querySelector(".homeScore");
+    let homeText = getContrastingTextColor(data.homeClub.color1, data.homeClub.textColor1);
+    console.log(`${data.homeClub.name} Color`, data.homeClub.color1, "text color", data.homeClub.textColor1, "contrast color", homeText);
+    homeScore.style.color = homeText;
+    document.querySelectorAll(".homeRider").forEach(cell => cell.style.color = homeText);
+    document.querySelectorAll(".forHome").forEach(elem => elem.style.color = homeText);
+  }
+
+  if (data?.awayClub?.textColor1) {
+    let awayScore = document.querySelector(".awayScore");
+    let awayText = getContrastingTextColor(data.awayClub.color1, data.awayClub.textColor1);
+    console.log(`${data.awayClub.name} Color`, data.awayClub.color1, "text color", data.awayClub.textColor1, "contrast color", awayText);
+    awayScore.style.color = awayText;
+    document.querySelectorAll(".awayRider").forEach(cell => cell.style.color = awayText);
+    document.querySelectorAll(".forAway").forEach(elem => elem.style.color = awayText);
+  }
 }
 
 let ts = 0;
@@ -180,7 +226,12 @@ main();
 
 function renderData(){
     resizeFunc();
-    setupClubColors();
+    if (!homeTextColor) setupClubColors();
+    else{
+        console.log("render fix")
+        document.querySelectorAll(".forHome")?.forEach(elem=>elem.style.color=`${homeTextColor}!important`);
+        document.querySelectorAll(".forAway")?.forEach(elem=>elem.style.color=`${awayTextColor}!important`);
+    }
     document.querySelectorAll(".position").forEach(e=>e.textContent="-1");
     let homeScore = 0;
     let awayScore = 0;
@@ -383,4 +434,3 @@ function resizeFunc(evt){
     })
 }
 resizeFunc();
-// testCards();
