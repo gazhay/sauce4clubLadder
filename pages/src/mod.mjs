@@ -391,7 +391,7 @@ function testCards(){
             domDest.insertAdjacentHTML('beforeend', thisCard);
             if (j<6) {
                 document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_1");
-            } else if (j==6)
+            } else if (j==6){
                 document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_1", "groupEdge");
             } else if (j>6){
                 document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
