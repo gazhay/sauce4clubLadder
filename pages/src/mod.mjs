@@ -369,7 +369,7 @@ function testCards(){
             domDest.insertAdjacentHTML('beforeend', thisCard);
             if (j<6) {
                 document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
-            else if (j>=6){
+            } else if (j>=6){
                 document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
             }
             // catch (e){
