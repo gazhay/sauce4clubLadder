@@ -271,7 +271,7 @@ function renderData(){
         let bVal = b.state.eventDistance;
         return aVal - bVal; // will mostly be correct since eventPosition doesn't exist ?!
     });
-    let groups   = riderCache.map( a => return {id:a.athleteId, distance:a.state.eventDistance});
+    let groups   = riderCache.map( a => {return {id:a.athleteId, distance:a.state.eventDistance}});
     groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
     let groupNum = 1;
     for (let group of groups){
