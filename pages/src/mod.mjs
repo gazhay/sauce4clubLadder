@@ -365,9 +365,11 @@ function testCards(){
     for(let j=0; j<10; j++){
         if (domDest){
             let thisCard = riderHTML(44249, (j%2==0) );
-            // console.log(id,thisCard);
-            if (j==6){
+            console.log(id,thisCard);
+            if (j==6) try {
                 thisCard.classList.add("Group_2")
+            } catch (e){
+                console.error(e);
             }
             domDest.insertAdjacentHTML('beforeend', thisCard);
         }
@@ -410,6 +412,7 @@ window.addEventListener('keydown', async e=>{
     } else if (e.code == "KeyT"){
         console.log("Trying Test")
         testCards();
+        resizeFunc();
     }
 });
 
