@@ -403,6 +403,8 @@ window.addEventListener('keydown', async e=>{
         } else {
             // console.log('Dialog cancelled');
         }
+    } else if (e.code == "KeyT"){
+        testCards();
     }
 });
 
