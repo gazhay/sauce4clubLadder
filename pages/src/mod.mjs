@@ -302,14 +302,7 @@ function renderData(){
                 domForRider.classList.remove(`Group_${i+1}`)
             }
 
-            // Apply groupEdge class when group changes
-            console.log("Grouping", "lastGroup",lastGroup, "groupnum",groupNum)
-            if (lastGroup !== null && lastGroup !== groupNum) {
-                domForRider.classList.add('groupEdge');
-            } else {
-                domForRider.classList.remove('groupEdge');
-            }
-            lastGroup = groupNum;
+            domForRider.classList.remove('groupEdge');
 
             if (Date.now() - rider.staleness > 10 * 1000) {
                 // 10 seconds delay
@@ -321,7 +314,7 @@ function renderData(){
             lastDist = rider.state.eventDistance;
             lastofGroup = domForRider;
         }
-        domForRider.classList.add('groupEdge');
+        lastofGroup.classList.add('groupEdge');
         groupNum++;
     }
     document.querySelectorAll(".rider").forEach(e=>{
