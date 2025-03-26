@@ -275,20 +275,22 @@ function renderData(){
     groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
     let groupNum = 1;
     for (let group of groups) {
-        // Remove last-of-group class from previous iteration
-        document.querySelectorAll(`.Group_${groupNum}`).forEach(el => {
-            el.classList.remove('group-last');
+        let lastofGroup = null;
+
+        // Remove groupEdge from all riders first
+        document.querySelectorAll('.groupEdge').forEach(el => {
+            el.classList.remove('groupEdge');
         });
 
-        let lastofGroup = null;
         for (let riderId of group.map(a => id)) {
             let rider = riderCache.find(a => a.athleteId == riderId);
-            // console.log("Rendering for ", rider.athleteId);
             let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
+
             if (!domForRider) {
                 console.error("Didn't find HTML for ", rider.athlete.id);
                 continue;
             }
+
             let riderPos = ++position;
             domForRider.querySelectorAll(".score").forEach(e => e.textContent = scoreForPos(riderPos));
             domForRider.querySelector(".position").textContent = riderPos;
@@ -301,20 +303,24 @@ function renderData(){
                 domForRider.classList.remove(`Group_${i+1}`)
             }
 
-            domForRider.classList.remove('groupEdge');
+            domForRider.classList.add(`Group_${groupNum}`);
 
             if (Date.now() - rider.staleness > 10 * 1000) {
-                // 10 seconds delay
                 domForRider.classList.add("delayed");
             } else {
                 domForRider.classList.remove("gapped");
             }
 
-            lastDist    = rider.state.eventDistance;
+            lastDist = rider.state.eventDistance;
             lastofGroup = domForRider;
         }
-        if (lastofGroup) lastofGroup.classList.add('groupEdge');
-        else console.error("Last of group missing",groupNum);
+
+        if (lastofGroup) {
+            lastofGroup.classList.add('groupEdge');
+        } else {
+            console.error("Last of group missing", groupNum);
+        }
+
         groupNum++;
     }
     document.querySelectorAll(".rider").forEach(e=>{
