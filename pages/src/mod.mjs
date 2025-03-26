@@ -296,6 +296,7 @@ function renderData(){
             } else {
                 domForRider.classList.remove(`groupEdge`);
             }
+            lastGroup = groupNum;
             domForRider.classList.add(`Group_${groupNum}`);
             if (Date.now() - rider.staleness > 10 * 1000){
                 // 10 seconds delay
