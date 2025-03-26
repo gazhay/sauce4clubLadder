@@ -14,7 +14,7 @@ console.log("ClubLadder mod ",DEBUG, SERVER);
 var INTERESTEDIN  = [];
 
 const scoreForPos = pos=>[10,9,8,7,6,5,4,3,2,1][pos-1]??0;
-const tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
+let tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
 let riderCache    = [];
 
 let riderMaxes    = {};
