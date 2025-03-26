@@ -13,9 +13,8 @@ console.log("ClubLadder mod ",DEBUG, SERVER);
 
 var INTERESTEDIN  = [];
 
-var scoreForPos = pos=>[12,10,8,7,6,5,4,3,2,1][pos-1]??0;
-
-var   tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
+const scoreForPos = pos=>[10,9,8,7,6,5,4,3,2,1][pos-1]??0;
+const tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
 let riderCache    = [];
 
 let riderMaxes    = {};
@@ -176,29 +175,29 @@ function setupClubColors(data) {
 }
 
 let ts = 0;
-function onAthleteData(data){
-    // Any rider
+function onAthleteData(data) {
     data.staleness = new Date();
-    let existing = riderCache.findIndex(a=>a.athleteId==data.athleteId);
-    if (existing==-1){
-        riderCache.push(data);
-    } else {
-        riderCache.splice(existing, 1, data);
+    // If no existing max, initialize from incoming data
+    if (!riderMaxes[data.athleteId]) {
+        console.log(`Initializing max distance for athlete ${data.athleteId}`);
+        riderMaxes[data.athleteId] = data.state.eventDistance || 0;
     }
-    // Not convinced this won't break when we change watchers.
-    if (!data.state.eventDistance){ data.state.eventDistance = riderMaxes?.[data.athleteId] || 0; }
-    // Thats a bit circular but should cover the edge cases.
-    if (!riderMaxes[data.athleteId] || riderMaxes[data.athleteId]<data.state.eventDistance) riderMaxes[data.athleteId] = data.state.eventDistance;
-    if (!EVENT && data.state?.eventSubgroupId) EVENT = data.state.eventSubgroupId; // Set global EVENT;
-    if (data.state?.eventSubgroupId != EVENT) try {
-        // Should be null before an event,
-        // Should be different after EVENT has been set globally and then we are unset.
-        finishers.push(data.athleteId);
-        let myFinisher = riderCache.findIndex(a=>a.athleteId==data.athleteId);
-        if (myFinisher>-1) riderCache[myFinisher].finished = true;
-    } catch (e){
-        console.error(e);
+
+    // Always use the larger value
+    const previousMax = riderMaxes[data.athleteId];
+    riderMaxes[data.athleteId] = Math.max(
+        riderMaxes[data.athleteId],
+        data.state.eventDistance || 0
+    );
+
+    if (previousMax !== riderMaxes[data.athleteId]) {
+        console.log(`Updated max distance for athlete ${data.athleteId}:
+            ${previousMax} → ${riderMaxes[data.athleteId]}`);
     }
+
+    // Ensure event distance is set
+    data.state.eventDistance = riderMaxes[data.athleteId];
+
     const now = Date.now();
     if (now - ts > 1900) {
         ts = now;
@@ -224,6 +223,36 @@ async function main() {
 }
 main();
 
+function groupRaceCompetitors(competitors, bikeLengthSeparation = 5) {
+    // Handle empty input
+    if (!competitors || competitors.length === 0) {
+        return [];
+    }
+
+    // Sort competitors by distance (descending) if not already sorted
+    const sortedCompetitors = [...competitors].sort((a, b) => b.distance - a.distance);
+
+    // Initialize groups with the first competitor
+    const groups = [[sortedCompetitors[0]]];
+
+    for (let i = 1; i < sortedCompetitors.length; i++) {
+        const currentCompetitor         = sortedCompetitors[i];
+        const lastGroup                 = groups[groups.length - 1];
+        const lastCompetitorInLastGroup = lastGroup[lastGroup.length - 1];
+
+        // Check if the current competitor is within bike length separation
+        // If distance difference is less than bike length, add to the current group
+        if (lastCompetitorInLastGroup.distance - currentCompetitor.distance < bikeLengthSeparation) {
+            lastGroup.push(currentCompetitor);
+        } else {
+            // Start a new group
+            groups.push([currentCompetitor]);
+        }
+    }
+
+    return groups;
+}
+
 function renderData(){
     resizeFunc();
     if (!homeTextColor) setupClubColors();
@@ -240,47 +269,37 @@ function renderData(){
     riderCache.sort( (a,b)=>{
         let aVal = a.state.eventDistance;
         let bVal = b.state.eventDistance;
-        if (a.finished) aVal = 500000000+(10-finishers.indexOf(a.athleteId));
-        if (b.finsihed) bVal = 500000000+(10-finishers.indexOf(b.athleteId)); //hack for finished riders
-        return bVal - aVal; // will mostly be correct since eventPosition doesn't exist ?!
-    })
-    for(let rider of riderCache){
-        // console.log("Rendering for ", rider.athleteId);
-        let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
-        if (!domForRider){
-            console.error("Didn't find HTML for ",rider.athlete.id);
-            continue;
-        }
-        let riderPos = ++position;
-        domForRider.querySelectorAll(".score").forEach(e=>e.textContent=scoreForPos(riderPos));
-        domForRider.querySelector(".position").textContent=riderPos;
-        domForRider.querySelectorAll(".name").forEach(e=>e.textContent=rider.athlete.sanitizedFullname);
-        domForRider.style.position = "absolute";
-        domForRider.style.top = `${tops[riderPos]}px`;
-        if (Date.now() - rider.staleness > 10 * 1000 ){
-            // 10 seconds delay
-            domForRider.classList.add("delayed");
-        } else {
-            domForRider.classList.remove("delayed");
-        }
-        if (riderPos>=10){
-            domForRider.classList.add("d-none");
-        } else {
-            domForRider.classList.remove("d-none");
-        }
-        if (rider.finsihed){
-            domForRider.classList.add("finished");
-        } else {
-            domForRider.classList.remove("finished");
-        }
-        if (GAPPY){
-            if (lastDist>0 && lastDist-rider.state.eventDistance > 500){
-                domForRider.classList.add("gapped");
+        return aVal - bVal; // will mostly be correct since eventPosition doesn't exist ?!
+    });
+    let groups   = riderCache.map( a => return {id:a.athleteId, distance:a.state.eventDistance});
+    groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
+    let groupNum = 1;
+    for (let group of groups){
+        for(let riderId of group.map(a=>id)){
+            let rider = riderCache.find(a=>a.athleteId==riderId);
+            // console.log("Rendering for ", rider.athleteId);
+            let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
+            if (!domForRider){
+                console.error("Didn't find HTML for ",rider.athlete.id);
+                continue;
+            }
+            let riderPos = ++position;
+            domForRider.querySelectorAll(".score").forEach(e=>e.textContent=scoreForPos(riderPos));
+            domForRider.querySelector(".position").textContent=riderPos;
+            domForRider.querySelectorAll(".name").forEach(e=>e.textContent=rider.athlete.sanitizedFullname);
+            domForRider.style.position = "absolute";
+            domForRider.style.top      = `${tops[riderPos]}px`;
+            for(let i=0;i<10;i++){ domForRider.classList.remove(`Group_${i+1}`) }
+            domForRider.classList.add(`Group_${groupNum}`);
+            if (Date.now() - rider.staleness > 10 * 1000){
+                // 10 seconds delay
+                domForRider.classList.add("delayed");
             } else {
                 domForRider.classList.remove("gapped");
             }
             lastDist = rider.state.eventDistance;
         }
+        groupNum++;
     }
     document.querySelectorAll(".rider").forEach(e=>{
         if (e.querySelector(".position").textContent=="-1"){
@@ -293,8 +312,8 @@ function renderData(){
             if (e.classList.contains("awayRider")) awayScore += ~~(e.querySelector(".score").textContent);
         }
     });
-    let homeScoreDom = document.querySelector(".homeScore");//.SplashHomeTeam");
-    let awayScoreDom = document.querySelector(".awayScore");//SplashAwayTeam");
+    let homeScoreDom = document.querySelector(".homeScore");
+    let awayScoreDom = document.querySelector(".awayScore");
 
     awayScoreDom.textContent = awayScore;
     homeScoreDom.textContent = homeScore;
@@ -354,7 +373,7 @@ function testCards(){
 
 // UI Stuff
 var backgroundOpacity = 0;
-window.addEventListener('keydown', (e)=>{
+window.addEventListener('keydown', async e=>{
     if (e.isComposing || e.keyCode === 229) return;
     if (e.code=="Escape"  ) {
         location.reload();
@@ -366,9 +385,24 @@ window.addEventListener('keydown', (e)=>{
         backgroundOpacity -= 0.10;
         backgroundOpacity = Math.min(1,backgroundOpacity);
         document.body.style["background"] = `rgba(0,0,0,${backgroundOpacity})`;
-    } else if (e.code == "KeyH"){
-        GAPPY = !GAPPY;
-        console.log("Gap mode ",GAPPY);
+    } else if (e.code == "KeyA"){
+        const result = await createInputModal({
+            title        : 'Add rider',
+            numericLabel : 'ZwiftId',
+            selectLabel  : 'Team',
+            selectOptions: ['Home','Away']
+        });
+
+        if (result) {
+            let zwiftId = result.numeric;
+            let team    = result.select;
+
+            riderHTML(zwiftId, team=="Home");
+            common.subscribe(`athlete/${zwiftId}`, onAthleteData);
+            // console.log('Selected values:', result);
+        } else {
+            // console.log('Dialog cancelled');
+        }
     }
 });
 
@@ -434,3 +468,96 @@ function resizeFunc(evt){
     })
 }
 resizeFunc();
+// testCards();
+
+function createInputModal(options = {}) {
+    const {
+        title = 'Input Dialog',
+        numericLabel = 'Number',
+        numericValue = '',
+        selectLabel = 'Select',
+        selectOptions = []
+    } = options;
+
+    return new Promise((resolve) => {
+        // Create modal container with a unique, unlikely-to-conflict ID
+        const modalContainer = document.createElement('div');
+        modalContainer.id = 'anthropic-input-modal-' + Date.now();
+        modalContainer.style.position = 'fixed';
+        modalContainer.style.top = '0';
+        modalContainer.style.left = '0';
+        modalContainer.style.width = '100%';
+        modalContainer.style.height = '100%';
+        modalContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        modalContainer.style.display = 'flex';
+        modalContainer.style.justifyContent = 'center';
+        modalContainer.style.alignItems = 'center';
+        modalContainer.style.zIndex = '10000';
+
+        // Create modal content
+        const modalContent = document.createElement('div');
+        modalContent.style.backgroundColor = 'white';
+        modalContent.style.padding = '20px';
+        modalContent.style.borderRadius = '5px';
+        modalContent.style.width = '300px';
+        modalContent.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+
+        // Construct modal HTML
+        modalContent.innerHTML = `
+            <h2 style="margin-bottom: 15px;">${title}</h2>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                <label for="anthropic-numeric-input">${numericLabel}:</label>
+                <input
+                    type="number"
+                    id="anthropic-numeric-input"
+                    style="padding: 5px; width: 100%;"
+                    value="${numericValue}"
+                >
+                <label for="anthropic-select-input">${selectLabel}:</label>
+                <select
+                    id="anthropic-select-input"
+                    style="padding: 5px; width: 100%;"
+                >
+                    ${selectOptions.map(option =>
+                        `<option value="${option}">${option}</option>`
+                    ).join('')}
+                </select>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <button id="anthropic-ok-button" style="padding: 5px 10px;">OK</button>
+                <button id="anthropic-cancel-button" style="padding: 5px 10px;">Cancel</button>
+            </div>
+        `;
+
+        // Append content to container
+        modalContainer.appendChild(modalContent);
+
+        // Append to body
+        document.body.appendChild(modalContainer);
+
+        // Get references to elements
+        const numericInput = modalContainer.querySelector('#anthropic-numeric-input');
+        const selectInput  = modalContainer.querySelector('#anthropic-select-input');
+        const okButton     = modalContainer.querySelector('#anthropic-ok-button');
+        const cancelButton = modalContainer.querySelector('#anthropic-cancel-button');
+
+        // OK button handler
+        okButton.addEventListener('click', () => {
+            const result = {
+                numeric: numericInput.value,
+                select: selectInput.value
+            };
+            document.body.removeChild(modalContainer);
+            resolve(result);
+        });
+
+        // Cancel button handler
+        cancelButton.addEventListener('click', () => {
+            document.body.removeChild(modalContainer);
+            resolve(null);
+        });
+
+        // Focus on numeric input when modal opens
+        numericInput.focus();
+    });
+}
