@@ -301,14 +301,14 @@ function renderData(){
                 domForRider.classList.remove(`Group_${i+1}`)
             }
 
-            if (lastGroup != groupNum) {
-                domForRider.classList.add(`groupEdge`);
-            } else {
-                domForRider.classList.remove(`groupEdge`);
-            }
 
-            lastGroup = groupNum;
-            domForRider.classList.add(`Group_${groupNum}`);
+        // Apply groupEdge class when group changes
+        if (lastGroup !== null && lastGroup !== groupNum) {
+            domForRider.classList.add('groupEdge');
+        } else {
+            domForRider.classList.remove('groupEdge');
+        }
+ lastGroup = groupNum;
 
             if (Date.now() - rider.staleness > 10 * 1000) {
                 // 10 seconds delay
