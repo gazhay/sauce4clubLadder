@@ -374,6 +374,7 @@ function testCards(){
 // UI Stuff
 var backgroundOpacity = 0;
 window.addEventListener('keydown', async e=>{
+    console.log(e);
     if (e.isComposing || e.keyCode === 229) return;
     if (e.code=="Escape"  ) {
         location.reload();
@@ -404,6 +405,7 @@ window.addEventListener('keydown', async e=>{
             // console.log('Dialog cancelled');
         }
     } else if (e.code == "KeyT"){
+        console.log("Trying Test")
         testCards();
     }
 });
