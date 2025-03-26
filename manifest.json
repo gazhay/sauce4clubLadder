@@ -4,7 +4,7 @@
     "description"     : "Proof-of-concept live score",
     "author"          : "Gareth Hay",
     "website_url"     : "https://ladder.cycleracing.club",
-    "version"         : "0.0.5",
+    "version"         : "0.0.6",
     "content_js"      : [],
     "content_css"     : [],
     "web_root"        : "pages",

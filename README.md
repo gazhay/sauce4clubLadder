@@ -1,6 +1,13 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+Changes v0.0.6 - March 2025
+---------------------------
+* Reworked logic to remove circular nonsense
+* Added breakaway grouping indicator
+* Add a rider (key A) allows you to add riders (untested)
+* Adjusted look of the widget slightly (removed rounding)
+
 Changes v0.0.5 - May 2024
 -------------------------
 * Made team text color contrast with background so we can see it.
