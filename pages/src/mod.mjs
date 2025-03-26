@@ -274,6 +274,7 @@ function renderData(){
     let groups   = riderCache.map( a => {return {id:a.athleteId, distance:a.state.eventDistance}});
     groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
     let groupNum = 1;
+    let lastGroup = groupNum;
     for (let group of groups){
         for(let riderId of group.map(a=>id)){
             let rider = riderCache.find(a=>a.athleteId==riderId);
@@ -290,6 +291,11 @@ function renderData(){
             domForRider.style.position = "absolute";
             domForRider.style.top      = `${tops[riderPos]}px`;
             for(let i=0;i<10;i++){ domForRider.classList.remove(`Group_${i+1}`) }
+            if (lastGroup!=groupNum){
+                domForRider.classList.add(`groupEdge`);
+            } else {
+                domForRider.classList.remove(`groupEdge`);
+            }
             domForRider.classList.add(`Group_${groupNum}`);
             if (Date.now() - rider.staleness > 10 * 1000){
                 // 10 seconds delay
