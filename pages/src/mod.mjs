@@ -275,37 +275,57 @@ function renderData(){
     groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
     let groupNum = 1;
     let lastGroup = groupNum;
-    for (let group of groups){
-        for(let riderId of group.map(a=>id)){
-            let rider = riderCache.find(a=>a.athleteId==riderId);
+    for (let group of groups) {
+        // Remove last-of-group class from previous iteration
+        document.querySelectorAll(`.Group_${groupNum}`).forEach(el => {
+            el.classList.remove('group-last');
+        });
+
+        for (let riderId of group.map(a => id)) {
+            let rider = riderCache.find(a => a.athleteId == riderId);
             // console.log("Rendering for ", rider.athleteId);
             let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
-            if (!domForRider){
-                console.error("Didn't find HTML for ",rider.athlete.id);
+            if (!domForRider) {
+                console.error("Didn't find HTML for ", rider.athlete.id);
                 continue;
             }
             let riderPos = ++position;
-            domForRider.querySelectorAll(".score").forEach(e=>e.textContent=scoreForPos(riderPos));
-            domForRider.querySelector(".position").textContent=riderPos;
-            domForRider.querySelectorAll(".name").forEach(e=>e.textContent=rider.athlete.sanitizedFullname);
+            domForRider.querySelectorAll(".score").forEach(e => e.textContent = scoreForPos(riderPos));
+            domForRider.querySelector(".position").textContent = riderPos;
+            domForRider.querySelectorAll(".name").forEach(e => e.textContent = rider.athlete.sanitizedFullname);
             domForRider.style.position = "absolute";
-            domForRider.style.top      = `${tops[riderPos]}px`;
-            for(let i=0;i<10;i++){ domForRider.classList.remove(`Group_${i+1}`) }
-            if (lastGroup!=groupNum){
+            domForRider.style.top = `${tops[riderPos]}px`;
+
+            // Remove all Group_ classes
+            for (let i = 0; i < 10; i++) {
+                domForRider.classList.remove(`Group_${i+1}`)
+            }
+
+            if (lastGroup != groupNum) {
                 domForRider.classList.add(`groupEdge`);
             } else {
                 domForRider.classList.remove(`groupEdge`);
             }
+
             lastGroup = groupNum;
             domForRider.classList.add(`Group_${groupNum}`);
-            if (Date.now() - rider.staleness > 10 * 1000){
+
+            if (Date.now() - rider.staleness > 10 * 1000) {
                 // 10 seconds delay
                 domForRider.classList.add("delayed");
             } else {
                 domForRider.classList.remove("gapped");
             }
+
             lastDist = rider.state.eventDistance;
         }
+
+        // Add 'group-last' class to the last rider in this group
+        const groupRiders = document.querySelectorAll(`.Group_${groupNum}`);
+        if (groupRiders.length > 0) {
+            groupRiders[groupRiders.length - 1].classList.add('group-last');
+        }
+
         groupNum++;
     }
     document.querySelectorAll(".rider").forEach(e=>{
