@@ -368,7 +368,7 @@ function testCards(){
             let thisCard = riderHTML(id, (j%2==0) );
             domDest.insertAdjacentHTML('beforeend', thisCard);
             if (j<6) {
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_1");
             } else if (j>=6){
                 document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
             }
