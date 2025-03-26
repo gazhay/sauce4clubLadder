@@ -436,6 +436,7 @@ window.addEventListener('keydown', async e=>{
 
             common.subscribe(`athlete/${zwiftId}`, onAthleteData);
             console.log('Added Rider:', zwiftId);
+            resizeFunc();
         } else {
             // console.log('Dialog cancelled');
         }
