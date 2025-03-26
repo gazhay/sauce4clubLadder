@@ -430,9 +430,12 @@ window.addEventListener('keydown', async e=>{
             let zwiftId = result.numeric;
             let team    = result.select;
 
-            riderHTML(zwiftId, team=="Home");
+            let thisCard = riderHTML(zwiftId, team=="Home");
+            let domDest  = document.querySelector(".scoreList");
+            domDest.insertAdjacentHTML('beforeend', thisCard);
+
             common.subscribe(`athlete/${zwiftId}`, onAthleteData);
-            // console.log('Selected values:', result);
+            console.log('Added Rider:', zwiftId);
         } else {
             // console.log('Dialog cancelled');
         }
