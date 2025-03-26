@@ -364,14 +364,14 @@ function testCards(){
     domDest.innerHTML = "";
     for(let j=0; j<10; j++){
         if (domDest){
-            let thisCard = riderHTML(44249, (j%2==0) );
-            console.log(id,thisCard);
+            let id = 44249+j;
+            let thisCard = riderHTML(id, (j%2==0) );
+            domDest.insertAdjacentHTML('beforeend', thisCard);
             if (j==6) try {
-                thisCard.classList.add("Group_2")
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
             } catch (e){
                 console.error(e);
             }
-            domDest.insertAdjacentHTML('beforeend', thisCard);
         }
     }
 }
