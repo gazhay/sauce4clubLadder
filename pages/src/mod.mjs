@@ -274,7 +274,6 @@ function renderData(){
     let groups   = riderCache.map( a => {return {id:a.athleteId, distance:a.state.eventDistance}});
     groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
     let groupNum = 1;
-    let lastGroup = groupNum;
     for (let group of groups) {
         // Remove last-of-group class from previous iteration
         document.querySelectorAll(`.Group_${groupNum}`).forEach(el => {
@@ -311,10 +310,11 @@ function renderData(){
                 domForRider.classList.remove("gapped");
             }
 
-            lastDist = rider.state.eventDistance;
+            lastDist    = rider.state.eventDistance;
             lastofGroup = domForRider;
         }
-        lastofGroup.classList.add('groupEdge');
+        if (lastofGroup) lastofGroup.classList.add('groupEdge');
+        else console.error("Last of group missing",groupNum);
         groupNum++;
     }
     document.querySelectorAll(".rider").forEach(e=>{
