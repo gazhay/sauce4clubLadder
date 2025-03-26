@@ -367,11 +367,14 @@ function testCards(){
             let id = 44249+j;
             let thisCard = riderHTML(id, (j%2==0) );
             domDest.insertAdjacentHTML('beforeend', thisCard);
-            if (j==6) try {
+            if (j<6) {
                 document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
-            } catch (e){
-                console.error(e);
+            else if (j>=6){
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
             }
+            // catch (e){
+                // console.error(e);
+            // }
         }
     }
 }
