@@ -281,6 +281,7 @@ function renderData(){
             el.classList.remove('group-last');
         });
 
+        let lastofGroup = null;
         for (let riderId of group.map(a => id)) {
             let rider = riderCache.find(a => a.athleteId == riderId);
             // console.log("Rendering for ", rider.athleteId);
@@ -301,14 +302,14 @@ function renderData(){
                 domForRider.classList.remove(`Group_${i+1}`)
             }
 
-
-        // Apply groupEdge class when group changes
-        if (lastGroup !== null && lastGroup !== groupNum) {
-            domForRider.classList.add('groupEdge');
-        } else {
-            domForRider.classList.remove('groupEdge');
-        }
- lastGroup = groupNum;
+            // Apply groupEdge class when group changes
+            console.log("Grouping", "lastGroup",lastGroup, "groupnum",groupNum)
+            if (lastGroup !== null && lastGroup !== groupNum) {
+                domForRider.classList.add('groupEdge');
+            } else {
+                domForRider.classList.remove('groupEdge');
+            }
+            lastGroup = groupNum;
 
             if (Date.now() - rider.staleness > 10 * 1000) {
                 // 10 seconds delay
@@ -318,14 +319,9 @@ function renderData(){
             }
 
             lastDist = rider.state.eventDistance;
+            lastofGroup = domForRider;
         }
-
-        // Add 'group-last' class to the last rider in this group
-        const groupRiders = document.querySelectorAll(`.Group_${groupNum}`);
-        if (groupRiders.length > 0) {
-            groupRiders[groupRiders.length - 1].classList.add('group-last');
-        }
-
+        domForRider.classList.add('groupEdge');
         groupNum++;
     }
     document.querySelectorAll(".rider").forEach(e=>{
