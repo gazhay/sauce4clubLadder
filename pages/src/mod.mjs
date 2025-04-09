@@ -140,6 +140,7 @@ async function fetchFromLadder(fake=false){
         common.unsubscribe(`athlete/${subs}`, onAthleteData);
     }
     for(let rider of INTERESTEDIN){
+        console.log("real subscribe",rider)
         common.subscribe(`athlete/${rider}`, onAthleteData);
     }
     setupIndividuals(myLadderData, INTERESTEDIN);
