@@ -372,7 +372,7 @@ function setupIndividuals(data, ids){
     try{
         data.homeSignups = JSON.parse(data.homeSignups);
         data.awaySignups = JSON.parse(data.awaySignups);
-    } catch e{
+    } catch (e){
         console.error(e)
     }
     for(let id of ids){
