@@ -369,8 +369,12 @@ function setupIndividuals(data, ids){
     let domDest = document.querySelector(".scoreList");
     positionsCreated = 0;
     domDest.innerHTML = "";
-    data.homeSignups = JSON.parse(data.homeSignups);
-    data.awaySignups = JSON.parse(data.awaySignups);
+    try{
+        data.homeSignups = JSON.parse(data.homeSignups);
+        data.awaySignups = JSON.parse(data.awaySignups);
+    } catch e{
+        console.error(e)
+    }
     for(let id of ids){
         if (domDest){
             let thisCard = riderHTML(id, data.homeSignups.includes(id));
