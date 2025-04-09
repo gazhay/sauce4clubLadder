@@ -32,7 +32,6 @@ function hexToRgb(hex) {
         parseInt(result[3], 16)
     ] : null;
 }
-
 const contrastColor = (incol, darkColor = ColorDark, lightColor = ColorLight) => {
     const threshold = 186;
     let rgb;
@@ -47,7 +46,6 @@ const contrastColor = (incol, darkColor = ColorDark, lightColor = ColorLight) =>
 
     return (((rgb[0] * 0.299) + (rgb[1] * 0.587) + (rgb[2] * 0.114)) > threshold) ? darkColor : lightColor;
 };
-
 function getContrastingTextColor(backgroundColor, textColor) {
   // Calculate the relative luminance of the background and text colors
   const backgroundLuminance = calculateLuminance(backgroundColor);
@@ -57,7 +55,6 @@ function getContrastingTextColor(backgroundColor, textColor) {
   const luminanceDiff = Math.abs(backgroundLuminance - textLuminance);
   return luminanceDiff > 0.5 ? textColor : invertColor(textColor);
 }
-
 function calculateLuminance(hexColor) {
   const r = parseInt(hexColor.slice(1, 3), 16) / 255;
   const g = parseInt(hexColor.slice(3, 5), 16) / 255;
@@ -66,7 +63,6 @@ function calculateLuminance(hexColor) {
   const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
   return luminance;
 }
-
 function invertColor(hexColor) {
   const r = 255 - parseInt(hexColor.slice(1, 3), 16);
   const g = 255 - parseInt(hexColor.slice(3, 5), 16);
@@ -139,7 +135,8 @@ async function fetchFromLadder(fake=false){
     for (let subs of oldInterests){
         common.unsubscribe(`athlete/${subs}`, onAthleteData);
     }
-    console.log(">>>>",INTERESTEDIN)
+    // console.log(">>>>",INTERESTEDIN)
+    positionsCreated=0;
     for(let rider of INTERESTEDIN){
         // console.log("real subscribe",rider)
         common.subscribe(`athlete/${rider}`, onAthleteData);
@@ -286,7 +283,7 @@ function renderData(){
             el.classList.remove('groupEdge');
         });
 
-        for (let riderId of group.map(a => id)) {
+        for (let riderId of group.map(a => a.id)) {
             let rider = riderCache.find(a => a.athleteId == riderId);
             let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
 
