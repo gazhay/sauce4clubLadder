@@ -179,7 +179,7 @@ function onAthleteData(data) {
     data.staleness = new Date();
     // If no existing max, initialize from incoming data
     if (!riderMaxes[data.athleteId]) {
-        console.log(`Initializing max distance for athlete ${data.athleteId}`);
+        // console.log(`Initializing max distance for athlete ${data.athleteId}`);
         riderMaxes[data.athleteId] = data.state.eventDistance || 0;
     }
 
@@ -190,10 +190,10 @@ function onAthleteData(data) {
         data.state.eventDistance || 0
     );
 
-    if (previousMax !== riderMaxes[data.athleteId]) {
-        console.log(`Updated max distance for athlete ${data.athleteId}:
-            ${previousMax} → ${riderMaxes[data.athleteId]}`);
-    }
+    // if (previousMax !== riderMaxes[data.athleteId]) {
+    //     console.log(`Updated max distance for athlete ${data.athleteId}:
+    //         ${previousMax} → ${riderMaxes[data.athleteId]}`);
+    // }
 
     // Ensure event distance is set
     data.state.eventDistance = riderMaxes[data.athleteId];
@@ -218,6 +218,7 @@ async function main() {
     await fetchFromLadder();
 
     for(let rider of INTERESTEDIN){
+        console.log("Subscribe",rider)
         common.subscribe(`athlete/${rider}`, onAthleteData);
     }
 }
