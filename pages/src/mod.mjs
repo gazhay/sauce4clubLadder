@@ -361,7 +361,7 @@ function renderData(){
     }
 }
 function setupIndividuals(data, ids){
-    console.log("SI:",data,ids);
+    // console.log("SI:",data,ids);
     document.querySelector(".SplashHomeTeam").textContent = data.homeTeamName;
     document.querySelector(".SplashAwayTeam").textContent = data.awayTeamName;
     document.querySelector(".homeScore").textContent = 0;
@@ -376,7 +376,7 @@ function setupIndividuals(data, ids){
             let thisCard = riderHTML(id, data.homeSignups.includes(id));
             // console.log(id,thisCard);
             domDest.insertAdjacentHTML('beforeend', thisCard);
-        }
+        } else console.error("Scorelist missing");
     }
 }
 
