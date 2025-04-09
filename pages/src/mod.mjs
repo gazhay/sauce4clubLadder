@@ -178,7 +178,7 @@ function setupClubColors(data) {
 
 let ts = 0;
 function onAthleteData(data) {
-    console.log(data);
+    // console.log(data);
     data.staleness = new Date();
     // If no existing max, initialize from incoming data
     if (!riderMaxes[data.athleteId]) {
@@ -361,6 +361,7 @@ function renderData(){
     }
 }
 function setupIndividuals(data, ids){
+    console.log("SI:",data,ids);
     document.querySelector(".SplashHomeTeam").textContent = data.homeTeamName;
     document.querySelector(".SplashAwayTeam").textContent = data.awayTeamName;
     document.querySelector(".homeScore").textContent = 0;
