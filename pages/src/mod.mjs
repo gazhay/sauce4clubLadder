@@ -141,7 +141,7 @@ async function fetchFromLadder(fake=false){
     }
     console.log(">>>>",INTERESTEDIN)
     for(let rider of INTERESTEDIN){
-        console.log("real subscribe",rider)
+        // console.log("real subscribe",rider)
         common.subscribe(`athlete/${rider}`, onAthleteData);
     }
     setupIndividuals(myLadderData, INTERESTEDIN);
@@ -178,6 +178,7 @@ function setupClubColors(data) {
 
 let ts = 0;
 function onAthleteData(data) {
+    console.log(data);
     data.staleness = new Date();
     // If no existing max, initialize from incoming data
     if (!riderMaxes[data.athleteId]) {
