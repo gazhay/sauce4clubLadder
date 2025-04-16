@@ -273,7 +273,7 @@ function renderData(){
         return bVal - aVal; // will mostly be correct since eventPosition doesn't exist ?!
     })
     for(let rider of riderCache){
-        // console.log("Rendering for ", rider.athleteId);
+        console.log("Rendering for ", rider.athleteId);
         let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
         if (!domForRider){
             console.error("Didn't find HTML for ",rider.athlete.id);
