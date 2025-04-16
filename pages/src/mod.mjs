@@ -270,59 +270,47 @@ function renderData(){
     riderCache.sort( (a,b)=>{
         let aVal = a.state.eventDistance;
         let bVal = b.state.eventDistance;
-        return aVal - bVal; // will mostly be correct since eventPosition doesn't exist ?!
-    });
-    let groups   = riderCache.map( a => {return {id:a.athleteId, distance:a.state.eventDistance}});
-    groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
-    let groupNum = 1;
-    for (let group of groups) {
-        let lastofGroup = null;
-
-        // Remove groupEdge from all riders first
-        document.querySelectorAll('.groupEdge').forEach(el => {
-            el.classList.remove('groupEdge');
-        });
-
-        for (let riderId of group.map(a => a.id)) {
-            let rider = riderCache.find(a => a.athleteId == riderId);
-            let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
-
-            if (!domForRider) {
-                console.error("Didn't find HTML for ", rider.athlete.id);
-                continue;
-            }
-
-            let riderPos = ++position;
-            domForRider.querySelectorAll(".score").forEach(e => e.textContent = scoreForPos(riderPos));
-            domForRider.querySelector(".position").textContent = riderPos;
-            domForRider.querySelectorAll(".name").forEach(e => e.textContent = rider.athlete.sanitizedFullname);
-            domForRider.style.position = "absolute";
-            domForRider.style.top = `${tops[riderPos]}px`;
-
-            // Remove all Group_ classes
-            for (let i = 0; i < 10; i++) {
-                domForRider.classList.remove(`Group_${i+1}`)
-            }
-
-            domForRider.classList.add(`Group_${groupNum}`);
-
-            if (Date.now() - rider.staleness > 10 * 1000) {
-                domForRider.classList.add("delayed");
+        if (a.finished) aVal = 500000000+(10-finishers.indexOf(a.athleteId));
+        if (b.finsihed) bVal = 500000000+(10-finishers.indexOf(b.athleteId)); //hack for finished riders
+        return bVal - aVal; // will mostly be correct since eventPosition doesn't exist ?!
+    })
+    for(let rider of riderCache){
+        // console.log("Rendering for ", rider.athleteId);
+        let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
+        if (!domForRider){
+            console.error("Didn't find HTML for ",rider.athlete.id);
+            continue;
+        }
+        let riderPos = ++position;
+        domForRider.querySelectorAll(".score").forEach(e=>e.textContent=scoreForPos(riderPos));
+        domForRider.querySelector(".position").textContent=riderPos;
+        domForRider.querySelectorAll(".name").forEach(e=>e.textContent=rider.athlete.sanitizedFullname);
+        domForRider.style.position = "absolute";
+        domForRider.style.top = `${tops[riderPos]}px`;
+        if (Date.now() - rider.staleness > 10 * 1000 ){
+            // 10 seconds delay
+            domForRider.classList.add("delayed");
+        } else {
+            domForRider.classList.remove("delayed");
+        }
+        if (riderPos>=10){
+            domForRider.classList.add("d-none");
+        } else {
+            domForRider.classList.remove("d-none");
+        }
+        if (rider.finsihed){
+            domForRider.classList.add("finished");
+        } else {
+            domForRider.classList.remove("finished");
+        }
+        if (GAPPY){
+            if (lastDist>0 && lastDist-rider.state.eventDistance > 500){
+                domForRider.classList.add("gapped");
             } else {
                 domForRider.classList.remove("gapped");
             }
-
             lastDist = rider.state.eventDistance;
-            lastofGroup = domForRider;
         }
-
-        if (lastofGroup) {
-            lastofGroup.classList.add('groupEdge');
-        } else {
-            console.error("Last of group missing", groupNum);
-        }
-
-        groupNum++;
     }
     document.querySelectorAll(".rider").forEach(e=>{
         if (e.querySelector(".position").textContent=="-1"){
@@ -335,8 +323,8 @@ function renderData(){
             if (e.classList.contains("awayRider")) awayScore += ~~(e.querySelector(".score").textContent);
         }
     });
-    let homeScoreDom = document.querySelector(".homeScore");
-    let awayScoreDom = document.querySelector(".awayScore");
+    let homeScoreDom = document.querySelector(".homeScore");//.SplashHomeTeam");
+    let awayScoreDom = document.querySelector(".awayScore");//SplashAwayTeam");
 
     awayScoreDom.textContent = awayScore;
     homeScoreDom.textContent = homeScore;
