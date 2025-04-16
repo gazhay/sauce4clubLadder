@@ -374,6 +374,7 @@ function setupIndividuals(data, ids){
     }
     for(let id of ids){
         if (domDest){
+            console.log("Insering",id,domDest)
             let thisCard = riderHTML(id, data.homeSignups.includes(id));
             // console.log(id,thisCard);
             domDest.insertAdjacentHTML('beforeend', thisCard);
