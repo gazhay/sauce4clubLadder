@@ -175,12 +175,19 @@ function setupClubColors(data) {
 
 let ts = 0;
 function onAthleteData(data) {
-    console.log(data);
+    // console.log(data);
     data.staleness = new Date();
     // If no existing max, initialize from incoming data
     if (!riderMaxes[data.athleteId]) {
         // console.log(`Initializing max distance for athlete ${data.athleteId}`);
         riderMaxes[data.athleteId] = data.state.eventDistance || 0;
+    }
+
+    let existing = riderCache.findIndex(a=>a.athleteId==data.athleteId);
+    if (existing==-1){
+        riderCache.push(data);
+    } else {
+        riderCache.splice(existing, 1, data);
     }
 
     // Always use the larger value
@@ -201,7 +208,6 @@ function onAthleteData(data) {
     const now = Date.now();
     if (now - ts > 1900) {
         ts = now;
-        console.log("render")
         renderData();
     }
 }
@@ -259,7 +265,7 @@ function renderData(){
     resizeFunc();
     if (!homeTextColor) setupClubColors();
     else{
-        // console.log("render fix")
+        console.log("render fix")
         document.querySelectorAll(".forHome")?.forEach(elem=>elem.style.color=`${homeTextColor}!important`);
         document.querySelectorAll(".forAway")?.forEach(elem=>elem.style.color=`${awayTextColor}!important`);
     }
@@ -271,45 +277,59 @@ function renderData(){
     riderCache.sort( (a,b)=>{
         let aVal = a.state.eventDistance;
         let bVal = b.state.eventDistance;
-        return bVal - aVal; // will mostly be correct since eventPosition doesn't exist ?!
-    })
-    for(let rider of riderCache){
-        // console.log("Rendering for ", rider.athleteId);
-        let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
-        if (!domForRider){
-            console.error("Didn't find HTML for ",rider.athlete.id);
-            continue;
-        }
-        let riderPos = ++position;
-        domForRider.querySelectorAll(".score").forEach(e=>e.textContent=scoreForPos(riderPos));
-        domForRider.querySelector(".position").textContent=riderPos;
-        domForRider.querySelectorAll(".name").forEach(e=>e.textContent=rider.athlete.sanitizedFullname);
-        domForRider.style.position = "absolute";
-        domForRider.style.top = `${tops[riderPos]}px`;
-        if (Date.now() - rider.staleness > 10 * 1000 ){
-            // 10 seconds delay
-            domForRider.classList.add("delayed");
-        } else {
-            domForRider.classList.remove("delayed");
-        }
-        if (riderPos>=10){
-            domForRider.classList.add("d-none");
-        } else {
-            domForRider.classList.remove("d-none");
-        }
-        if (rider.finsihed){
-            domForRider.classList.add("finished");
-        } else {
-            domForRider.classList.remove("finished");
-        }
-        if (GAPPY){
-            if (lastDist>0 && lastDist-rider.state.eventDistance > 500){
-                domForRider.classList.add("gapped");
+        return aVal - bVal; // will mostly be correct since eventPosition doesn't exist ?!
+    });
+    let groups   = riderCache.map( a => {return {id:a.athleteId, distance:a.state.eventDistance}});
+    groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
+    let groupNum = 1;
+    for (let group of groups) {
+        let lastofGroup = null;
+
+        // Remove groupEdge from all riders first
+        document.querySelectorAll('.groupEdge').forEach(el => {
+            el.classList.remove('groupEdge');
+        });
+
+        for (let riderId of group.map(a => a.id)) {
+            let rider = riderCache.find(a => a.athleteId == riderId);
+            let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
+
+            if (!domForRider) {
+                console.error("Didn't find HTML for ", rider.athlete.id);
+                continue;
+            }
+
+            let riderPos = ++position;
+            domForRider.querySelectorAll(".score").forEach(e => e.textContent = scoreForPos(riderPos));
+            domForRider.querySelector(".position").textContent = riderPos;
+            domForRider.querySelectorAll(".name").forEach(e => e.textContent = rider.athlete.sanitizedFullname);
+            domForRider.style.position = "absolute";
+            domForRider.style.top = `${tops[riderPos]}px`;
+
+            // Remove all Group_ classes
+            for (let i = 0; i < 10; i++) {
+                domForRider.classList.remove(`Group_${i+1}`)
+            }
+
+            domForRider.classList.add(`Group_${groupNum}`);
+
+            if (Date.now() - rider.staleness > 10 * 1000) {
+                domForRider.classList.add("delayed");
             } else {
                 domForRider.classList.remove("gapped");
             }
+
             lastDist = rider.state.eventDistance;
+            lastofGroup = domForRider;
         }
+
+        if (lastofGroup) {
+            lastofGroup.classList.add('groupEdge');
+        } else {
+            console.error("Last of group missing", groupNum);
+        }
+
+        groupNum++;
     }
     document.querySelectorAll(".rider").forEach(e=>{
         if (e.querySelector(".position").textContent=="-1"){
@@ -322,8 +342,8 @@ function renderData(){
             if (e.classList.contains("awayRider")) awayScore += ~~(e.querySelector(".score").textContent);
         }
     });
-    let homeScoreDom = document.querySelector(".homeScore");//.SplashHomeTeam");
-    let awayScoreDom = document.querySelector(".awayScore");//SplashAwayTeam");
+    let homeScoreDom = document.querySelector(".homeScore");
+    let awayScoreDom = document.querySelector(".awayScore");
 
     awayScoreDom.textContent = awayScore;
     homeScoreDom.textContent = homeScore;
@@ -361,6 +381,7 @@ function setupIndividuals(data, ids){
     }
     for(let id of ids){
         if (domDest){
+            console.log("Insering",id,domDest)
             let thisCard = riderHTML(id, data.homeSignups.includes(id));
             // console.log(id,thisCard);
             domDest.insertAdjacentHTML('beforeend', thisCard);
@@ -462,6 +483,7 @@ function resizeFunc(evt){
         let margins        = elem.getAttribute("data-margins")?.split(",") || null;
         let fontLine       = elem.getAttribute("data-line-height") || null;
         let mode           = elem.getAttribute("data-scale") || "smallest";
+        console.log("resize",fontSize);
         if (mode=="smallest"){
             elem.style.width  = elem.style["min-width" ] = `${originalWidth  * smallest}px`;
             elem.style.height = elem.style["min-height"] = `${originalHeight * smallest}px`;
