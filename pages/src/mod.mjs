@@ -258,7 +258,7 @@ function renderData(){
     resizeFunc();
     if (!homeTextColor) setupClubColors();
     else{
-        console.log("render fix")
+        // console.log("render fix")
         document.querySelectorAll(".forHome")?.forEach(elem=>elem.style.color=`${homeTextColor}!important`);
         document.querySelectorAll(".forAway")?.forEach(elem=>elem.style.color=`${awayTextColor}!important`);
     }
@@ -270,8 +270,6 @@ function renderData(){
     riderCache.sort( (a,b)=>{
         let aVal = a.state.eventDistance;
         let bVal = b.state.eventDistance;
-        if (a.finished) aVal = 500000000+(10-finishers.indexOf(a.athleteId));
-        if (b.finsihed) bVal = 500000000+(10-finishers.indexOf(b.athleteId)); //hack for finished riders
         return bVal - aVal; // will mostly be correct since eventPosition doesn't exist ?!
     })
     for(let rider of riderCache){
@@ -362,7 +360,6 @@ function setupIndividuals(data, ids){
     }
     for(let id of ids){
         if (domDest){
-            console.log("Insering",id,domDest)
             let thisCard = riderHTML(id, data.homeSignups.includes(id));
             // console.log(id,thisCard);
             domDest.insertAdjacentHTML('beforeend', thisCard);
