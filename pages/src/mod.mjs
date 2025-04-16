@@ -175,7 +175,7 @@ function setupClubColors(data) {
 
 let ts = 0;
 function onAthleteData(data) {
-    // console.log(data);
+    console.log(data);
     data.staleness = new Date();
     // If no existing max, initialize from incoming data
     if (!riderMaxes[data.athleteId]) {
@@ -273,7 +273,7 @@ function renderData(){
         return bVal - aVal; // will mostly be correct since eventPosition doesn't exist ?!
     })
     for(let rider of riderCache){
-        console.log("Rendering for ", rider.athleteId);
+        // console.log("Rendering for ", rider.athleteId);
         let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
         if (!domForRider){
             console.error("Didn't find HTML for ",rider.athlete.id);
