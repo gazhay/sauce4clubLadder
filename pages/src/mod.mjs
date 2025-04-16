@@ -228,6 +228,8 @@ async function main() {
         console.log("Subscribe",rider)
         common.subscribe(`athlete/${rider}`, onAthleteData);
     }
+
+    resizeFunc();
 }
 main();
 
@@ -288,9 +290,9 @@ function renderData(){
         document.querySelectorAll('.groupEdge').forEach(el => {
             el.classList.remove('groupEdge');
         });
-
+        const riderMap = new Map(riderCache.map(r => [r.athleteId, r]));
         for (let riderId of group.map(a => a.id)) {
-            let rider = riderCache.find(a => a.athleteId == riderId);
+            let rider = riderMap.get(riderId);
             let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
 
             if (!domForRider) {
@@ -521,7 +523,7 @@ function resizeFunc(evt){
         }
     })
 }
-resizeFunc();
+// resizeFunc();
 // testCards();
 
 function createInputModal(options = {}) {
