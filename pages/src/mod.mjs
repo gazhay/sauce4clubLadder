@@ -201,6 +201,7 @@ function onAthleteData(data) {
     const now = Date.now();
     if (now - ts > 1900) {
         ts = now;
+        console.log("render")
         renderData();
     }
 }
