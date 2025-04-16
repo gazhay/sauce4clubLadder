@@ -476,6 +476,7 @@ function resizeFunc(evt){
         let margins        = elem.getAttribute("data-margins")?.split(",") || null;
         let fontLine       = elem.getAttribute("data-line-height") || null;
         let mode           = elem.getAttribute("data-scale") || "smallest";
+        console.log("resize",fontSize);
         if (mode=="smallest"){
             elem.style.width  = elem.style["min-width" ] = `${originalWidth  * smallest}px`;
             elem.style.height = elem.style["min-height"] = `${originalHeight * smallest}px`;
