@@ -243,6 +243,14 @@
             .cover:hover{
                 background : rgba(0,0,0,0.5)!important;
             }
+@media (any-hover: none) {
+    .cover::after {
+        content: 'Long press for controls';
+    }
+    .cover:hover{
+        background : rgba(0,0,0,0.5)!important;
+    }
+}
         </style>
     </head>
     <body class="">
