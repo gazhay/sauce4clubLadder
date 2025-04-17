@@ -231,9 +231,6 @@
                 border-bottom : 4px solid rgba(255,255,255,0.6);
                 margin-bottom : 4px;
             }
-            .cover:hover{
-                background : rgba(0,0,0,0.5)!important;
-            }
             .cover {
                 position   :absolute;
                 left       :0px;
@@ -241,7 +238,10 @@
                 bottom     :0px;
                 top        :0px;
                 background : rgba(0,0,0,0);
-                z-index    : 10000;
+                z-index    : -1;
+            }
+            .cover:hover{
+                background : rgba(0,0,0,0.5)!important;
             }
         </style>
     </head>
