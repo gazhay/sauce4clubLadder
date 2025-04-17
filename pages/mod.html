@@ -231,8 +231,17 @@
                 border-bottom : 4px solid rgba(255,255,255,0.6);
                 margin-bottom : 4px;
             }
-            body:hover{
+            .cover:hover{
                 background : rgba(0,0,0,0.5)!important;
+            }
+            .cover {
+                position   :absolute;
+                left       :0px;
+                right      :0px;
+                bottom     :0px;
+                top        :0px;
+                background : rgba(0,0,0,0);
+                z-index    : 10000;
             }
         </style>
     </head>
@@ -247,5 +256,6 @@
             </section>
             <section class="scoreList"> </section>
         </main>
+        <div class="cover"> </div>
     </body>
 </html>
