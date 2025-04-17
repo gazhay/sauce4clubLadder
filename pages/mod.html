@@ -245,7 +245,25 @@
             <section class="scoreList"> </section>
         </main>
         <script type="text/javascript">
-            document.addEventListener("ready", ()=>{ moveWindow(); });
+            document.addEventListener("ready", ()=>{
+                moveWindow();
+                let isDragging = false;
+
+                // Detect when dragging might be starting
+                window.addEventListener('mousedown', () => {
+                  // Set a flag that might indicate dragging
+                  isDragging = true;
+                  document.body.classList.add('is-dragging');
+                });
+
+                // Detect when dragging likely ends
+                window.addEventListener('mouseup', () => {
+                  if (isDragging) {
+                    isDragging = false;
+                    document.body.classList.remove('is-dragging');
+                  }
+                });
+            });
         </script>
     </body>
 </html>
