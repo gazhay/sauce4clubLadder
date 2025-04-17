@@ -248,52 +248,7 @@
             <section class="scoreList"> </section>
         </main>
         <script type="text/javascript">
-        document.addEventListener("DOMContentLoaded", () => {
-            // If the entire body is draggable
-            const dragArea = document.body;
-
-            let dragStartX = 0;
-            let dragStartY = 0;
-            let isDragging = false;
-            let dragCheckTimeout;
-
-            // Track mousedown on the body
-            dragArea.addEventListener('mousedown', (e) => {
-                // Store initial mouse position
-                dragStartX = e.clientX;
-                dragStartY = e.clientY;
-
-                // Setup potential drag detection
-                dragCheckTimeout = setTimeout(() => {
-                    document.body.classList.add('is-dragging');
-                    isDragging = true;
-                }, 100); // Short delay to confirm it's a drag
-            });
-
-            // Track mousemove to confirm dragging
-            document.addEventListener('mousemove', (e) => {
-                if (!isDragging && dragCheckTimeout) {
-                    // Check if mouse has moved enough to be considered a drag
-                    const deltaX = Math.abs(e.clientX - dragStartX);
-                    const deltaY = Math.abs(e.clientY - dragStartY);
-
-                    if (deltaX > 5 || deltaY > 5) {
-                        document.body.classList.add('is-dragging');
-                        isDragging = true;
-                        clearTimeout(dragCheckTimeout);
-                    }
-                }
-            });
-
-            // End drag state on mouseup
-            document.addEventListener('mouseup', () => {
-                clearTimeout(dragCheckTimeout);
-                if (isDragging) {
-                    document.body.classList.remove('is-dragging');
-                    isDragging = false;
-                }
-            });
-        });
+        document.addEventListener("DOMContentLoaded", () => { moveWindow(); });
         </script>
     </body>
 </html>
