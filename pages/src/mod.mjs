@@ -473,16 +473,6 @@ function resizeFunc(evt){
     })
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  document.body.addEventListener('mouseenter', function() {
-    document.body.classList.add('hovered');
-  });
-
-  document.body.addEventListener('mouseleave', function() {
-    document.body.classList.remove('hovered');
-  });
-});
-
 // Add a rider function
 function createInputModal(options = {}) {
     const {
