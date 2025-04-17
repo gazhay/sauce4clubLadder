@@ -473,6 +473,10 @@ function resizeFunc(evt){
     })
 }
 
+window.addEventListener("mouseover", e=>{
+    console.log(e);
+})
+
 // Add a rider function
 function createInputModal(options = {}) {
     const {
