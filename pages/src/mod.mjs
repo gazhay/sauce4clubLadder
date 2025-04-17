@@ -472,7 +472,21 @@ function resizeFunc(evt){
         }
     })
 }
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('mouseover', function(e) {
+        if (e.target.tagName === 'BODY' || e.target.tagName === 'HTML') {
+            document.body.style.background = 'rgba(0,0,0,0.5)';
+        }
+    });
 
+    document.addEventListener('mouseout', function(e) {
+        if (e.relatedTarget === null ||
+            e.relatedTarget.tagName === 'HTML' ||
+            e.relatedTarget.tagName === 'BODY') {
+            document.body.style.background = 'transparent';
+        }
+    });
+});
 // Add a rider function
 function createInputModal(options = {}) {
     const {

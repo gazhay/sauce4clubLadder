@@ -14,10 +14,10 @@
     --ladder-tertiary-bg     : rgba( 33, 113, 182, 0.75);
     --ladder-text-bg         : rgba(  0,   0,   0, 0.75);/*rgba(255,255,255, 0.5);*/
 }
-
 html, body {
-    background      : transparent;
-    user-select     : none;
+    background: transparent;
+    user-select: none;
+    pointer-events: auto !important; /* Force pointer events to be detected */
 }
 
 @font-face {
