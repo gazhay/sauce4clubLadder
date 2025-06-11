@@ -9,17 +9,17 @@ const SERVER      = (DEBUG!="")?"http://arwen.lan:5000":"https://ladder.cyclerac
 var   GAPPY       = false;
 var   EVENT       = null;
 
-// console.log("ClubLadder mod ",DEBUG, SERVER);
+console.log("ClubLadder mod ",DEBUG, SERVER);
 
-var INTERESTEDIN = [];
+var INTERESTEDIN  = [];
 
-var scoreForPos  = pos =>[10,9,8,7,6,5,4,3,2,1][pos-1]??0;
-let tops         = Array.from(Array(12).keys()).map( (a,i) =>( 10+ (45*(i-1)) ));
-let riderCache   = [];
+var scoreForPos = pos=>[10,9,8,7,6,5,4,3,2,1][pos-1]??0;
+let tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
+let riderCache    = [];
 
-let riderMaxes   = {};
-let finishers    = [];
-const ColorDark  = "#ffffff";
+let riderMaxes    = {};
+let finishers     = [];
+const ColorDark = "#ffffff";
 const ColorLight = "#000000";
 
 function hexToRgb(hex) {
@@ -71,34 +71,43 @@ function invertColor(hexColor) {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
-var positionsCreated = 0;
-var homeTextColor    = null;
-var awayTextColor    = null;
-let ts               = 0;
-const fakeClubs      = {
-    homeClub: {
-        id: 1,
-        zwiftClubId: 168,
-        name: 'Team Type 1',
-        remoteAvatar: null,
-        color1: '#5684b6',
-        color2: '#254076',
-        textColor1: '#ffffff',
-        textColor2: '#254076',
-    },
-    awayClub: {
-        id: 66,
-        zwiftClubId: 161,
-        name: 'ZSUN Racing',
-        remoteAvatar: null,
-        color1: '#1c1300',
-        color2: '#ffffff',
-        textColor1: '#ffd808',
-        textColor2: '#ffffff',
-    }
+const fakeClubs = {homeClub:
+  {
+    id          : 1,
+    zwiftClubId : 168,
+    name        : 'Team Type 1',
+    remoteAvatar: null,
+    color1      : '#5684b6',
+    color2      : '#254076',
+    textColor1  : '#ffffff',
+    textColor2  : '#254076',
+}, awayClub:
+  {
+    id          : 66,
+    zwiftClubId : 161,
+    name        : 'ZSUN Racing',
+    remoteAvatar: null,
+    color1      : '#1c1300',
+    color2      : '#ffffff',
+    textColor1  : '#ffd808',
+    textColor2  : '#ffffff',
+  }
 };
 
-// Global Setup
+var positionsCreated = 0;
+const riderHTML = (riderId,isHome, fakeNames=false) =>{
+    // if (positionsCreated>=10) return "";
+    let thisPos = ++positionsCreated;
+    let output =
+    `<div class="rider ${positionsCreated>=10?"d-none":""} ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
+        <div class="score forHome scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
+        <div class="name forHome text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
+        <div class="position scaleMe" data-font-size="18" data-line-height="40" data-scale="textOnly"> ${thisPos} </div>
+        <div class="name forAway text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
+        <div class="score forAway scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
+    </div>`;
+    return output;
+}
 async function fetchFromLadder(fake=false){
     if (fake){
         testCards();
@@ -138,6 +147,9 @@ async function fetchFromLadder(fake=false){
 
     return true;
 }
+
+var homeTextColor = null;
+var awayTextColor = null;
 function setupClubColors(data) {
   if (data?.homeClub?.color1) { document.documentElement.style.setProperty("--ladder-secondary-bg", data.homeClub.color1); }
   if (data?.awayClub?.color1) { document.documentElement.style.setProperty("--ladder-tertiary-bg", data.awayClub.color1); }
@@ -161,46 +173,7 @@ function setupClubColors(data) {
   }
 }
 
-// Rider Setup
-const riderHTML = (riderId,isHome, fakeNames=false) =>{
-    // if (positionsCreated>=10) return "";
-    let thisPos = ++positionsCreated;
-    let output =
-    `<div class="rider ${positionsCreated>=10?"d-none":""} ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
-        <div class="score forHome scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
-        <div class="name forHome text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
-        <div class="position scaleMe" data-font-size="18" data-line-height="40" data-scale="textOnly"> ${thisPos} </div>
-        <div class="name forAway text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
-        <div class="score forAway scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
-    </div>`;
-    return output;
-}
-function setupIndividuals(data, ids){
-    // console.log("SI:",data,ids);
-    document.querySelector(".SplashHomeTeam").textContent = data.homeTeamName;
-    document.querySelector(".SplashAwayTeam").textContent = data.awayTeamName;
-    document.querySelector(".homeScore").textContent = 0;
-    document.querySelector(".awayScore").textContent = 0;
-    let domDest = document.querySelector(".scoreList");
-    positionsCreated = 0;
-    domDest.innerHTML = "";
-    try{
-        data.homeSignups = JSON.parse(data.homeSignups);
-        data.awaySignups = JSON.parse(data.awaySignups);
-    } catch (e){
-        console.error(e)
-    }
-    for(let id of ids){
-        if (domDest){
-            // console.log("Insering",id,domDest)
-            let thisCard = riderHTML(id, data.homeSignups.includes(id));
-            // console.log(id,thisCard);
-            domDest.insertAdjacentHTML('beforeend', thisCard);
-        } else console.error("Scorelist missing");
-    }
-}
-
-// Data poll and render
+let ts = 0;
 function onAthleteData(data) {
     // console.log(data);
     data.staleness = new Date();
@@ -208,13 +181,6 @@ function onAthleteData(data) {
     if (!riderMaxes[data.athleteId]) {
         // console.log(`Initializing max distance for athlete ${data.athleteId}`);
         riderMaxes[data.athleteId] = data.state.eventDistance || 0;
-    }
-
-    let existing = riderCache.findIndex(a=>a.athleteId==data.athleteId);
-    if (existing==-1){
-        riderCache.push(data);
-    } else {
-        riderCache.splice(existing, 1, data);
     }
 
     // Always use the larger value
@@ -238,6 +204,26 @@ function onAthleteData(data) {
         renderData();
     }
 }
+
+async function main() {
+    common.subscribe('athlete/watching', async data => {
+        let olduser = USER;
+        if (data.athleteId != USER){
+            USER         = data.athleteId;
+            console.log("Switched to ",USER);
+            if (USER!=0) await fetchFromLadder();
+        }
+    });
+
+    await fetchFromLadder();
+
+    for(let rider of INTERESTEDIN){
+        console.log("Subscribe",rider)
+        common.subscribe(`athlete/${rider}`, onAthleteData);
+    }
+}
+main();
+
 function groupRaceCompetitors(competitors, bikeLengthSeparation = 5) {
     // Handle empty input
     if (!competitors || competitors.length === 0) {
@@ -255,22 +241,24 @@ function groupRaceCompetitors(competitors, bikeLengthSeparation = 5) {
         const lastGroup                 = groups[groups.length - 1];
         const lastCompetitorInLastGroup = lastGroup[lastGroup.length - 1];
 
-        // Check if the current competitor is separated by more than the bike length
-        // If they are too far apart, start a new group
-        if (lastCompetitorInLastGroup.distance - currentCompetitor.distance > bikeLengthSeparation) {
-            groups.push([currentCompetitor]);
-        } else {
-            // If they're close enough, add to the current group
+        // Check if the current competitor is within bike length separation
+        // If distance difference is less than bike length, add to the current group
+        if (lastCompetitorInLastGroup.distance - currentCompetitor.distance < bikeLengthSeparation) {
             lastGroup.push(currentCompetitor);
+        } else {
+            // Start a new group
+            groups.push([currentCompetitor]);
         }
     }
 
     return groups;
 }
+
 function renderData(){
     resizeFunc();
     if (!homeTextColor) setupClubColors();
     else{
+        console.log("render fix")
         document.querySelectorAll(".forHome")?.forEach(elem=>elem.style.color=`${homeTextColor}!important`);
         document.querySelectorAll(".forAway")?.forEach(elem=>elem.style.color=`${awayTextColor}!important`);
     }
@@ -289,11 +277,14 @@ function renderData(){
     let groupNum = 1;
     for (let group of groups) {
         let lastofGroup = null;
+
         // Remove groupEdge from all riders first
-        document.querySelectorAll('.groupEdge').forEach(el => { el.classList.remove('groupEdge'); });
-        const riderMap = new Map(riderCache.map(r => [r.athleteId, r]));
+        document.querySelectorAll('.groupEdge').forEach(el => {
+            el.classList.remove('groupEdge');
+        });
+
         for (let riderId of group.map(a => a.id)) {
-            let rider = riderMap.get(riderId);
+            let rider = riderCache.find(a => a.athleteId == riderId);
             let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
 
             if (!domForRider) {
@@ -366,6 +357,57 @@ function renderData(){
         awayScoreDom.classList.remove("losing");
     }
 }
+function setupIndividuals(data, ids){
+    // console.log("SI:",data,ids);
+    document.querySelector(".SplashHomeTeam").textContent = data.homeTeamName;
+    document.querySelector(".SplashAwayTeam").textContent = data.awayTeamName;
+    document.querySelector(".homeScore").textContent = 0;
+    document.querySelector(".awayScore").textContent = 0;
+    let domDest = document.querySelector(".scoreList");
+    positionsCreated = 0;
+    domDest.innerHTML = "";
+    try{
+        data.homeSignups = JSON.parse(data.homeSignups);
+        data.awaySignups = JSON.parse(data.awaySignups);
+    } catch (e){
+        console.error(e)
+    }
+    for(let id of ids){
+        if (domDest){
+            let thisCard = riderHTML(id, data.homeSignups.includes(id));
+            // console.log(id,thisCard);
+            domDest.insertAdjacentHTML('beforeend', thisCard);
+        } else console.error("Scorelist missing");
+    }
+}
+
+// Debug stuff
+function testCards(){
+    document.querySelector(".SplashHomeTeam").textContent = "My Home Team";
+    document.querySelector(".SplashAwayTeam").textContent = "My Away Team";
+    document.querySelector(".homeScore").textContent = 0;
+    document.querySelector(".awayScore").textContent = 0;
+    let domDest = document.querySelector(".scoreList");
+    positionsCreated = 0;
+    domDest.innerHTML = "";
+    for(let j=0; j<10; j++){
+        if (domDest){
+            let id = 44249+j;
+            let thisCard = riderHTML(id, (j%2==0) );
+            domDest.insertAdjacentHTML('beforeend', thisCard);
+            if (j<6) {
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_1");
+            } else if (j==6){
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_1", "groupEdge");
+            } else if (j>6){
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
+            }
+            // catch (e){
+                // console.error(e);
+            // }
+        }
+    }
+}
 
 // UI Stuff
 var backgroundOpacity = 0;
@@ -411,8 +453,8 @@ window.addEventListener('keydown', async e=>{
     }
 });
 
-// Wild scaling function
 window.addEventListener("resize", resizeFunc);
+
 function resizeFunc(evt){
     document.body.style["background"] = `rgba(0,0,0,${backgroundOpacity})`;
     // console.log("Resize finished");
@@ -472,8 +514,9 @@ function resizeFunc(evt){
         }
     })
 }
+resizeFunc();
+// testCards();
 
-// Add a rider function
 function createInputModal(options = {}) {
     const {
         title = 'Input Dialog',
@@ -486,25 +529,25 @@ function createInputModal(options = {}) {
     return new Promise((resolve) => {
         // Create modal container with a unique, unlikely-to-conflict ID
         const modalContainer = document.createElement('div');
-        modalContainer.id                    = 'anthropic-input-modal-' + Date.now();
-        modalContainer.style.position        = 'fixed';
-        modalContainer.style.top             = '0';
-        modalContainer.style.left            = '0';
-        modalContainer.style.width           = '100%';
-        modalContainer.style.height          = '100%';
+        modalContainer.id = 'anthropic-input-modal-' + Date.now();
+        modalContainer.style.position = 'fixed';
+        modalContainer.style.top = '0';
+        modalContainer.style.left = '0';
+        modalContainer.style.width = '100%';
+        modalContainer.style.height = '100%';
         modalContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        modalContainer.style.display         = 'flex';
-        modalContainer.style.justifyContent  = 'center';
-        modalContainer.style.alignItems      = 'center';
-        modalContainer.style.zIndex          = '10000';
+        modalContainer.style.display = 'flex';
+        modalContainer.style.justifyContent = 'center';
+        modalContainer.style.alignItems = 'center';
+        modalContainer.style.zIndex = '10000';
 
         // Create modal content
-        const modalContent                 = document.createElement('div');
+        const modalContent = document.createElement('div');
         modalContent.style.backgroundColor = 'white';
-        modalContent.style.padding         = '20px';
-        modalContent.style.borderRadius    = '5px';
-        modalContent.style.width           = '300px';
-        modalContent.style.boxShadow       = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        modalContent.style.padding = '20px';
+        modalContent.style.borderRadius = '5px';
+        modalContent.style.width = '300px';
+        modalContent.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
 
         // Construct modal HTML
         modalContent.innerHTML = `
@@ -564,54 +607,4 @@ function createInputModal(options = {}) {
         // Focus on numeric input when modal opens
         numericInput.focus();
     });
-}
-
-// initial subscription
-async function main() {
-    common.subscribe('athlete/watching', async data => {
-        let olduser = USER;
-        if (data.athleteId != USER){
-            USER         = data.athleteId;
-            console.log("Switched to ",USER);
-            if (USER!=0) await fetchFromLadder();
-        }
-    });
-
-    await fetchFromLadder();
-
-    for(let rider of INTERESTEDIN){
-        console.log("Subscribe",rider)
-        common.subscribe(`athlete/${rider}`, onAthleteData);
-    }
-
-    resizeFunc();
-}
-main();
-
-// Debug stuff
-function testCards(){
-    document.querySelector(".SplashHomeTeam").textContent = "My Home Team";
-    document.querySelector(".SplashAwayTeam").textContent = "My Away Team";
-    document.querySelector(".homeScore").textContent = 0;
-    document.querySelector(".awayScore").textContent = 0;
-    let domDest = document.querySelector(".scoreList");
-    positionsCreated = 0;
-    domDest.innerHTML = "";
-    for(let j=0; j<10; j++){
-        if (domDest){
-            let id = 44249+j;
-            let thisCard = riderHTML(id, (j%2==0) );
-            domDest.insertAdjacentHTML('beforeend', thisCard);
-            if (j<6) {
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_1");
-            } else if (j==6){
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_1", "groupEdge");
-            } else if (j>6){
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
-            }
-            // catch (e){
-                // console.error(e);
-            // }
-        }
-    }
 }
