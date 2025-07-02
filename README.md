@@ -1,6 +1,8 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+TESTING NEW FINISH LINE DETECTION - WOULDN'T RECOMMEND YOU USE THIS VERSION (YET)
+
 Reverted some changes in an attempt to make things like move window work again
 
 Changes v0.0.6 - March 2025

@@ -19,6 +19,8 @@ let riderCache    = [];
 
 let riderMaxes    = {};
 let finishers     = [];
+let raceDistance  = null;  // Will store the race distance once first rider finishes
+const FINISH_THRESHOLD = 0.99;  // Consider rider finished if they're at 99% of leader's distance
 const ColorDark = "#ffffff";
 const ColorLight = "#000000";
 
@@ -175,25 +177,35 @@ function setupClubColors(data) {
 
 let ts = 0;
 function onAthleteData(data) {
-    // console.log(data);
     data.staleness = new Date();
-    // If no existing max, initialize from incoming data
+    
+    // If this is our first finisher, set the race distance
+    if (!raceDistance && data.state.eventDistance > 0 && data.state.progress >= 1) {
+        raceDistance = data.state.eventDistance;
+        console.log(`Race distance set to ${raceDistance}m`);
+    }
+
+    // Check if rider has finished
+    if (raceDistance && data.state.eventDistance >= raceDistance * FINISH_THRESHOLD) {
+        if (!finishers.includes(data.athleteId)) {
+            finishers.push(data.athleteId);
+            console.log(`Rider ${data.athlete.sanitizedFullname} finished in position ${finishers.length}`);
+        }
+        // Use their highest recorded distance for finished riders
+        data.state.eventDistance = riderMaxes[data.athleteId] || data.state.eventDistance;
+        return;  // Don't update max distance for finished riders
+    }
+
+    // For riders still racing, track their max distance
     if (!riderMaxes[data.athleteId]) {
-        // console.log(`Initializing max distance for athlete ${data.athleteId}`);
         riderMaxes[data.athleteId] = data.state.eventDistance || 0;
     }
 
-    // Always use the larger value
     const previousMax = riderMaxes[data.athleteId];
     riderMaxes[data.athleteId] = Math.max(
         riderMaxes[data.athleteId],
         data.state.eventDistance || 0
     );
-
-    // if (previousMax !== riderMaxes[data.athleteId]) {
-    //     console.log(`Updated max distance for athlete ${data.athleteId}:
-    //         ${previousMax} → ${riderMaxes[data.athleteId]}`);
-    // }
 
     // Ensure event distance is set
     data.state.eventDistance = riderMaxes[data.athleteId];
@@ -267,15 +279,65 @@ function renderData(){
     let awayScore = 0;
     let position  = 0;
     let lastDist  = 0;
-    riderCache.sort( (a,b)=>{
-        let aVal = a.state.eventDistance;
-        let bVal = b.state.eventDistance;
-        return aVal - bVal; // will mostly be correct since eventPosition doesn't exist ?!
+
+    // First, sort finished riders by their finish order
+    let sortedRiders = [...riderCache];
+    sortedRiders.sort((a, b) => {
+        // First priority: finished riders in their finish order
+        const aFinishIndex = finishers.indexOf(a.athleteId);
+        const bFinishIndex = finishers.indexOf(b.athleteId);
+        
+        if (aFinishIndex !== -1 && bFinishIndex !== -1) {
+            return aFinishIndex - bFinishIndex;
+        }
+        if (aFinishIndex !== -1) return -1;
+        if (bFinishIndex !== -1) return 1;
+        
+        // Second priority: distance for riders still racing
+        return b.state.eventDistance - a.state.eventDistance;
     });
-    let groups   = riderCache.map( a => {return {id:a.athleteId, distance:a.state.eventDistance}});
-    groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
+
+    // Group riders, but keep finished riders in their own groups
+    let groups = sortedRiders.map(a => {
+        return {
+            id: a.athleteId,
+            distance: a.state.eventDistance,
+            finished: finishers.includes(a.athleteId)
+        }
+    });
+
+    let currentGroup = [];
+    let finalGroups = [];
+    
+    for (let i = 0; i < groups.length; i++) {
+        const rider = groups[i];
+        
+        // Start a new group if:
+        // 1. This is a finished rider and previous wasn't
+        // 2. Previous was a finished rider and this isn't
+        // 3. Neither are finished but gap is significant
+        const prevRider = i > 0 ? groups[i - 1] : null;
+        
+        if (prevRider && (
+            (rider.finished !== prevRider.finished) ||
+            (!rider.finished && !prevRider.finished && prevRider.distance - rider.distance >= 5)
+        )) {
+            if (currentGroup.length > 0) {
+                finalGroups.push(currentGroup);
+                currentGroup = [];
+            }
+        }
+        
+        currentGroup.push(rider);
+        
+        // Push last group
+        if (i === groups.length - 1 && currentGroup.length > 0) {
+            finalGroups.push(currentGroup);
+        }
+    }
+
     let groupNum = 1;
-    for (let group of groups) {
+    for (let group of finalGroups) {
         let lastofGroup = null;
 
         // Remove groupEdge from all riders first
@@ -283,8 +345,8 @@ function renderData(){
             el.classList.remove('groupEdge');
         });
 
-        for (let riderId of group.map(a => a.id)) {
-            let rider = riderCache.find(a => a.athleteId == riderId);
+        for (let riderData of group) {
+            let rider = riderCache.find(a => a.athleteId == riderData.id);
             let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
 
             if (!domForRider) {
@@ -295,7 +357,14 @@ function renderData(){
             let riderPos = ++position;
             domForRider.querySelectorAll(".score").forEach(e => e.textContent = scoreForPos(riderPos));
             domForRider.querySelector(".position").textContent = riderPos;
-            domForRider.querySelectorAll(".name").forEach(e => e.textContent = rider.athlete.sanitizedFullname);
+            domForRider.querySelectorAll(".name").forEach(e => {
+                let name = rider.athlete.sanitizedFullname;
+                if (riderData.finished) {
+                    name += " 🏁"; // Add finish flag for finished riders
+                }
+                e.textContent = name;
+            });
+            
             domForRider.style.position = "absolute";
             domForRider.style.top = `${tops[riderPos]}px`;
 
@@ -305,11 +374,24 @@ function renderData(){
             }
 
             domForRider.classList.add(`Group_${groupNum}`);
-
-            if (Date.now() - rider.staleness > 10 * 1000) {
-                domForRider.classList.add("delayed");
+            
+            // Add finished class for styling
+            if (riderData.finished) {
+                domForRider.classList.add("finished");
             } else {
-                domForRider.classList.remove("gapped");
+                domForRider.classList.remove("finished");
+            }
+
+            // Handle network delays
+            const staleness = Date.now() - rider.staleness;
+            if (staleness > 10 * 1000) {
+                domForRider.classList.add("delayed");
+                if (staleness > 30 * 1000) {
+                    domForRider.classList.add("very-delayed");
+                }
+            } else {
+                domForRider.classList.remove("delayed");
+                domForRider.classList.remove("very-delayed");
             }
 
             lastDist = rider.state.eventDistance;
@@ -318,8 +400,6 @@ function renderData(){
 
         if (lastofGroup) {
             lastofGroup.classList.add('groupEdge');
-        } else {
-            console.error("Last of group missing", groupNum);
         }
 
         groupNum++;
