@@ -1,10 +1,10 @@
 {
     "manifest_version": 1,
-    "name"            : "Club Ladder Live",
-    "description"     : "Proof-of-concept live score",
+    "name"            : "Club Ladder Live Score",
+    "description"     : "Version 2, but really someone else write one will yous?",
     "author"          : "Gareth Hay",
     "website_url"     : "https://ladder.cycleracing.club",
-    "version"         : "0.0.6",
+    "version"         : "0.2.0",
     "content_js"      : [],
     "content_css"     : [],
     "web_root"        : "pages",

@@ -1,157 +1,55 @@
 import * as common from '/pages/src/common.mjs';
+import * as utils  from './utils.js';
+import * as data   from './data.js';
+
+// Attach to global scope
+Object.assign(globalThis, utils, data);
 
 const doc = document.documentElement;
 doc.classList.remove("frame");
 
-const DEBUG       = "";//"debug";
-var   USER        = 0;
-const SERVER      = (DEBUG!="")?"http://arwen.lan:5000":"https://ladder.cycleracing.club";
 var   GAPPY       = false;
 var   EVENT       = null;
 
-console.log("ClubLadder mod ",DEBUG, SERVER);
+// console.log("ClubLadder mod ",DEBUG, SERVER);
+const GAP_SIZE = 15; //meters
 
-var INTERESTEDIN  = [];
+var scoreForPos  = pos =>[10,9,8,7,6,5,4,3,2,1][pos-1]??0;
+let tops         = Array.from(Array(12).keys()).map( (a,i) =>( 10+ (45*(i-1)) ));
+let riderCache   = [];
 
-var scoreForPos = pos=>[10,9,8,7,6,5,4,3,2,1][pos-1]??0;
-let tops        = Array.from(Array(12).keys()).map( (a,i)=>( 10+ (45*(i-1)) ));
-let riderCache    = [];
-
-let riderMaxes    = {};
-let finishers     = [];
-let raceDistance  = null;  // Will store the race distance once first rider finishes
-const FINISH_THRESHOLD = 0.99;  // Consider rider finished if they're at 99% of leader's distance
-const ColorDark = "#ffffff";
-const ColorLight = "#000000";
-
-function hexToRgb(hex) {
-    const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-    hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16)
-    ] : null;
-}
-const contrastColor = (incol, darkColor = ColorDark, lightColor = ColorLight) => {
-    const threshold = 186;
-    let rgb;
-
-    if (typeof incol === 'string' && incol.startsWith("#")) {
-        rgb = hexToRgb(incol);
-    } else if (Array.isArray(incol) && incol.length === 3) {
-        rgb = incol;
-    } else {
-        throw new Error("Invalid color format. Please provide a hex color or an RGB array.");
-    }
-
-    return (((rgb[0] * 0.299) + (rgb[1] * 0.587) + (rgb[2] * 0.114)) > threshold) ? darkColor : lightColor;
-};
-function getContrastingTextColor(backgroundColor, textColor) {
-  // Calculate the relative luminance of the background and text colors
-  const backgroundLuminance = calculateLuminance(backgroundColor);
-  const textLuminance = calculateLuminance(textColor);
-
-  // Determine the appropriate contrasting color
-  const luminanceDiff = Math.abs(backgroundLuminance - textLuminance);
-  return luminanceDiff > 0.5 ? textColor : invertColor(textColor);
-}
-function calculateLuminance(hexColor) {
-  const r = parseInt(hexColor.slice(1, 3), 16) / 255;
-  const g = parseInt(hexColor.slice(3, 5), 16) / 255;
-  const b = parseInt(hexColor.slice(5, 7), 16) / 255;
-
-  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return luminance;
-}
-function invertColor(hexColor) {
-  const r = 255 - parseInt(hexColor.slice(1, 3), 16);
-  const g = 255 - parseInt(hexColor.slice(3, 5), 16);
-  const b = 255 - parseInt(hexColor.slice(5, 7), 16);
-
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-const fakeClubs = {homeClub:
-  {
-    id          : 1,
-    zwiftClubId : 168,
-    name        : 'Team Type 1',
-    remoteAvatar: null,
-    color1      : '#5684b6',
-    color2      : '#254076',
-    textColor1  : '#ffffff',
-    textColor2  : '#254076',
-}, awayClub:
-  {
-    id          : 66,
-    zwiftClubId : 161,
-    name        : 'ZSUN Racing',
-    remoteAvatar: null,
-    color1      : '#1c1300',
-    color2      : '#ffffff',
-    textColor1  : '#ffd808',
-    textColor2  : '#ffffff',
-  }
-};
+let riderMaxes   = {};
+let finishers    = [];
 
 var positionsCreated = 0;
-const riderHTML = (riderId,isHome, fakeNames=false) =>{
-    // if (positionsCreated>=10) return "";
-    let thisPos = ++positionsCreated;
-    let output =
-    `<div class="rider ${positionsCreated>=10?"d-none":""} ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
-        <div class="score forHome scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
-        <div class="name forHome text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
-        <div class="position scaleMe" data-font-size="18" data-line-height="40" data-scale="textOnly"> ${thisPos} </div>
-        <div class="name forAway text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
-        <div class="score forAway scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
-    </div>`;
-    return output;
-}
-async function fetchFromLadder(fake=false){
-    if (fake){
-        testCards();
-        return setupClubColors(fakeClubs);
+var homeTextColor    = null;
+var awayTextColor    = null;
+let ts               = 0;
+const fakeClubs      = {
+    homeClub: {
+        id: 1,
+        zwiftClubId: 168,
+        name: 'Team Type 1',
+        remoteAvatar: null,
+        color1: '#5684b6',
+        color2: '#254076',
+        textColor1: '#ffffff',
+        textColor2: '#254076',
+    },
+    awayClub: {
+        id: 66,
+        zwiftClubId: 161,
+        name: 'ZSUN Racing',
+        remoteAvatar: null,
+        color1: '#1c1300',
+        color2: '#ffffff',
+        textColor1: '#ffd808',
+        textColor2: '#ffffff',
     }
-    if (USER==0 && DEBUG=="") return null;
-    console.log("Setting up",`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`);
-    let myLadderData = await fetch(`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`).then(response=>response.json());
-    if (!myLadderData || myLadderData.length==0){
-        console.log("Timeout here and try again later",myLadderData);
-        return null;
-    }
-    myLadderData = myLadderData?.[0] || [];
+};
 
-    // Now we have to get the points structure for ladder matches
-    await fetch(`${SERVER}/api/pointsStructure`).then(response=>response.json()).then(scores=>{
-        if (scores && scores?.length>0){
-            scoreForPos = pos=>[...scores][pos-1]??0;
-        }
-    }).catch(err=>{console.log("Failed to fetch points",err)});
 
-    let oldInterests = INTERESTEDIN;
-    INTERESTEDIN = [...JSON.parse(myLadderData?.homeSignups),...JSON.parse(myLadderData?.awaySignups)];
-    console.log("Found riders from ladder :", INTERESTEDIN, myLadderData);
-    for (let subs of oldInterests){
-        common.unsubscribe(`athlete/${subs}`, onAthleteData);
-    }
-    // console.log(">>>>",INTERESTEDIN)
-    positionsCreated=0;
-    for(let rider of INTERESTEDIN){
-        // console.log("real subscribe",rider)
-        common.subscribe(`athlete/${rider}`, onAthleteData);
-    }
-    setupIndividuals(myLadderData, INTERESTEDIN);
-
-    setupClubColors(myLadderData);
-
-    return true;
-}
-
-var homeTextColor = null;
-var awayTextColor = null;
+// Global Setup
 function setupClubColors(data) {
   if (data?.homeClub?.color1) { document.documentElement.style.setProperty("--ladder-secondary-bg", data.homeClub.color1); }
   if (data?.awayClub?.color1) { document.documentElement.style.setProperty("--ladder-tertiary-bg", data.awayClub.color1); }
@@ -175,66 +73,44 @@ function setupClubColors(data) {
   }
 }
 
-let ts = 0;
-function onAthleteData(data) {
-    data.staleness = new Date();
-    
-    // If this is our first finisher, set the race distance
-    if (!raceDistance && data.state.eventDistance > 0 && data.state.progress >= 1) {
-        raceDistance = data.state.eventDistance;
-        console.log(`Race distance set to ${raceDistance}m`);
+// Rider Setup
+const riderHTML = (riderId,isHome, fakeNames=false) =>{
+    // if (positionsCreated>=10) return "";
+    let thisPos = ++positionsCreated;
+    let output =
+    `<div class="rider ${positionsCreated>=10?"d-none":""} ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
+        <div class="score forHome scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
+        <div class="name forHome text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
+        <div class="position scaleMe" data-font-size="18" data-line-height="40" data-scale="textOnly"> ${thisPos} </div>
+        <div class="name forAway text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
+        <div class="score forAway scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
+    </div>`;
+    return output;
+}
+function setupIndividuals(data, ids){
+    // console.log("SI:",data,ids);
+    document.querySelector(".SplashHomeTeam").textContent = data.homeTeamName;
+    document.querySelector(".SplashAwayTeam").textContent = data.awayTeamName;
+    document.querySelector(".homeScore").textContent = 0;
+    document.querySelector(".awayScore").textContent = 0;
+    let domDest = document.querySelector(".scoreList");
+    positionsCreated = 0;
+    domDest.innerHTML = "";
+    try{
+        data.homeSignups = JSON.parse(data.homeSignups);
+        data.awaySignups = JSON.parse(data.awaySignups);
+    } catch (e){
+        console.error(e)
     }
-
-    // Check if rider has finished
-    if (raceDistance && data.state.eventDistance >= raceDistance * FINISH_THRESHOLD) {
-        if (!finishers.includes(data.athleteId)) {
-            finishers.push(data.athleteId);
-            console.log(`Rider ${data.athlete.sanitizedFullname} finished in position ${finishers.length}`);
-        }
-        // Use their highest recorded distance for finished riders
-        data.state.eventDistance = riderMaxes[data.athleteId] || data.state.eventDistance;
-        return;  // Don't update max distance for finished riders
-    }
-
-    // For riders still racing, track their max distance
-    if (!riderMaxes[data.athleteId]) {
-        riderMaxes[data.athleteId] = data.state.eventDistance || 0;
-    }
-
-    const previousMax = riderMaxes[data.athleteId];
-    riderMaxes[data.athleteId] = Math.max(
-        riderMaxes[data.athleteId],
-        data.state.eventDistance || 0
-    );
-
-    // Ensure event distance is set
-    data.state.eventDistance = riderMaxes[data.athleteId];
-
-    const now = Date.now();
-    if (now - ts > 1900) {
-        ts = now;
-        renderData();
+    for(let id of ids){
+        if (domDest){
+            // console.log("Insering",id,domDest)
+            let thisCard = riderHTML(id, data.homeSignups.includes(id));
+            // console.log(id,thisCard);
+            domDest.insertAdjacentHTML('beforeend', thisCard);
+        } else console.error("Scorelist missing");
     }
 }
-
-async function main() {
-    common.subscribe('athlete/watching', async data => {
-        let olduser = USER;
-        if (data.athleteId != USER){
-            USER         = data.athleteId;
-            console.log("Switched to ",USER);
-            if (USER!=0) await fetchFromLadder();
-        }
-    });
-
-    await fetchFromLadder();
-
-    for(let rider of INTERESTEDIN){
-        console.log("Subscribe",rider)
-        common.subscribe(`athlete/${rider}`, onAthleteData);
-    }
-}
-main();
 
 function groupRaceCompetitors(competitors, bikeLengthSeparation = 5) {
     // Handle empty input
@@ -253,24 +129,38 @@ function groupRaceCompetitors(competitors, bikeLengthSeparation = 5) {
         const lastGroup                 = groups[groups.length - 1];
         const lastCompetitorInLastGroup = lastGroup[lastGroup.length - 1];
 
-        // Check if the current competitor is within bike length separation
-        // If distance difference is less than bike length, add to the current group
-        if (lastCompetitorInLastGroup.distance - currentCompetitor.distance < bikeLengthSeparation) {
-            lastGroup.push(currentCompetitor);
-        } else {
-            // Start a new group
+        // Check if the current competitor is separated by more than the bike length
+        // If they are too far apart, start a new group
+        if (lastCompetitorInLastGroup.distance - currentCompetitor.distance > bikeLengthSeparation) {
             groups.push([currentCompetitor]);
+        } else {
+            // If they're close enough, add to the current group
+            lastGroup.push(currentCompetitor);
         }
     }
 
     return groups;
 }
+function scaleDistanceToPixels(meters) {
+    const minMeters = 15;
+    const maxMeters = 30;
+    const minPixels = 2;
+    const maxPixels = 10;
+
+    // Clamp the input to your range
+    const clampedMeters = Math.max(minMeters, Math.min(maxMeters, meters));
+
+    // Scale linearly from 15-30m to 2-10px
+    const pixelValue = ((clampedMeters - minMeters) / (maxMeters - minMeters)) * (maxPixels - minPixels) + minPixels;
+
+    return `${Math.round(pixelValue)}px`;
+}
+
 
 function renderData(){
     resizeFunc();
     if (!homeTextColor) setupClubColors();
     else{
-        console.log("render fix")
         document.querySelectorAll(".forHome")?.forEach(elem=>elem.style.color=`${homeTextColor}!important`);
         document.querySelectorAll(".forAway")?.forEach(elem=>elem.style.color=`${awayTextColor}!important`);
     }
@@ -279,131 +169,102 @@ function renderData(){
     let awayScore = 0;
     let position  = 0;
     let lastDist  = 0;
-
-    // First, sort finished riders by their finish order
-    let sortedRiders = [...riderCache];
-    sortedRiders.sort((a, b) => {
-        // First priority: finished riders in their finish order
-        const aFinishIndex = finishers.indexOf(a.athleteId);
-        const bFinishIndex = finishers.indexOf(b.athleteId);
-        
-        if (aFinishIndex !== -1 && bFinishIndex !== -1) {
-            return aFinishIndex - bFinishIndex;
-        }
-        if (aFinishIndex !== -1) return -1;
-        if (bFinishIndex !== -1) return 1;
-        
-        // Second priority: distance for riders still racing
-        return b.state.eventDistance - a.state.eventDistance;
+    riderCache.sort( (a,b)=>{
+        let aVal = a.state.eventDistance;
+        let bVal = b.state.eventDistance;
+        return aVal - bVal; // will mostly be correct since eventPosition doesn't exist ?!
     });
 
-    // Group riders, but keep finished riders in their own groups
-    let groups = sortedRiders.map(a => {
-        return {
-            id: a.athleteId,
-            distance: a.state.eventDistance,
-            finished: finishers.includes(a.athleteId)
+    // let gap = 0;
+    // let lastDistance = 0;
+    riderCache.forEach((rider, index) => {
+        let riderBefore = index > 0 ? riderCache[index - 1] : null;
+        let riderAfter  = index < riderCache.length - 1 ? riderCache[index + 1] : null;
+
+        console.log("Rendering for ", rider.athleteId);
+        let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
+        if (!domForRider){
+            console.error("Didn't find HTML for ",rider.athlete.id);
+            return;
         }
+
+        let beforeDist = riderBefore.state.eventDistance - rider.state.eventDistance;
+        let afterDist  = rider.state.eventDistance       - riderAfter.state.eventDistance;
+        if (riderBefore && ((beforeDist) > GAP_SIZE)){
+            domForRider.classList.add("headOfGroup");
+            domForRider.style['margin-top'] = scaleDistanceToPixels(beforeDist);
+        } else {
+            domForRider.classList.remove("headOfGroup");
+            domForRider.style['margin-top'] = "inherit";
+        }
+
+        if (riderAfter && ((afterDist) > GAP_SIZE)){
+            domForRider.classList.add("rearOfGroup");
+            domForRider.style['margin-bottom'] = scaleDistanceToPixels(beforeDist);
+
+        } else {
+            domForRider.classList.remove("rearOfGroup");
+            domForRider.style['margin-bottom'] = "inherit";
+        }
+
+        let riderPos = index + 1;
+        domForRider.querySelectorAll(".score").forEach(e=>e.textContent=scoreForPos(riderPos));
+        domForRider.querySelector(".position").textContent=riderPos;
+        domForRider.querySelectorAll(".name").forEach(e=>e.textContent=rider.athlete.sanitizedFullname);
+        domForRider.style.position = "absolute";
+        domForRider.style.top = `${tops[riderPos]}px`;
     });
 
-    let currentGroup = [];
-    let finalGroups = [];
-    
-    for (let i = 0; i < groups.length; i++) {
-        const rider = groups[i];
-        
-        // Start a new group if:
-        // 1. This is a finished rider and previous wasn't
-        // 2. Previous was a finished rider and this isn't
-        // 3. Neither are finished but gap is significant
-        const prevRider = i > 0 ? groups[i - 1] : null;
-        
-        if (prevRider && (
-            (rider.finished !== prevRider.finished) ||
-            (!rider.finished && !prevRider.finished && prevRider.distance - rider.distance >= 5)
-        )) {
-            if (currentGroup.length > 0) {
-                finalGroups.push(currentGroup);
-                currentGroup = [];
-            }
-        }
-        
-        currentGroup.push(rider);
-        
-        // Push last group
-        if (i === groups.length - 1 && currentGroup.length > 0) {
-            finalGroups.push(currentGroup);
-        }
-    }
 
-    let groupNum = 1;
-    for (let group of finalGroups) {
-        let lastofGroup = null;
-
-        // Remove groupEdge from all riders first
-        document.querySelectorAll('.groupEdge').forEach(el => {
-            el.classList.remove('groupEdge');
-        });
-
-        for (let riderData of group) {
-            let rider = riderCache.find(a => a.athleteId == riderData.id);
-            let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
-
-            if (!domForRider) {
-                console.error("Didn't find HTML for ", rider.athlete.id);
-                continue;
-            }
-
-            let riderPos = ++position;
-            domForRider.querySelectorAll(".score").forEach(e => e.textContent = scoreForPos(riderPos));
-            domForRider.querySelector(".position").textContent = riderPos;
-            domForRider.querySelectorAll(".name").forEach(e => {
-                let name = rider.athlete.sanitizedFullname;
-                if (riderData.finished) {
-                    name += " 🏁"; // Add finish flag for finished riders
-                }
-                e.textContent = name;
-            });
-            
-            domForRider.style.position = "absolute";
-            domForRider.style.top = `${tops[riderPos]}px`;
-
-            // Remove all Group_ classes
-            for (let i = 0; i < 10; i++) {
-                domForRider.classList.remove(`Group_${i+1}`)
-            }
-
-            domForRider.classList.add(`Group_${groupNum}`);
-            
-            // Add finished class for styling
-            if (riderData.finished) {
-                domForRider.classList.add("finished");
-            } else {
-                domForRider.classList.remove("finished");
-            }
-
-            // Handle network delays
-            const staleness = Date.now() - rider.staleness;
-            if (staleness > 10 * 1000) {
-                domForRider.classList.add("delayed");
-                if (staleness > 30 * 1000) {
-                    domForRider.classList.add("very-delayed");
-                }
-            } else {
-                domForRider.classList.remove("delayed");
-                domForRider.classList.remove("very-delayed");
-            }
-
-            lastDist = rider.state.eventDistance;
-            lastofGroup = domForRider;
-        }
-
-        if (lastofGroup) {
-            lastofGroup.classList.add('groupEdge');
-        }
-
-        groupNum++;
-    }
+    // let groups   = riderCache.map( a => {return {id:a.athleteId, distance:a.state.eventDistance}});
+    // groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
+    // let groupNum = 1;
+    // for (let group of groups) {
+    //     let lastofGroup = null;
+    //     // Remove groupEdge from all riders first
+    //     document.querySelectorAll('.groupEdge').forEach(el => { el.classList.remove('groupEdge'); });
+    //     const riderMap = new Map(riderCache.map(r => [r.athleteId, r]));
+    //     for (let riderId of group.map(a => a.id)) {
+    //         let rider = riderMap.get(riderId);
+    //         let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
+    //
+    //         if (!domForRider) {
+    //             console.error("Didn't find HTML for ", rider.athlete.id);
+    //             continue;
+    //         }
+    //
+    //         let riderPos = ++position;
+    //         domForRider.querySelectorAll(".score").forEach(e => e.textContent = scoreForPos(riderPos));
+    //         domForRider.querySelector(".position").textContent = riderPos;
+    //         domForRider.querySelectorAll(".name").forEach(e => e.textContent = rider.athlete.sanitizedFullname);
+    //         domForRider.style.position = "absolute";
+    //         domForRider.style.top = `${tops[riderPos]}px`;
+    //
+    //         // Remove all Group_ classes
+    //         for (let i = 0; i < 10; i++) {
+    //             domForRider.classList.remove(`Group_${i+1}`)
+    //         }
+    //
+    //         domForRider.classList.add(`Group_${groupNum}`);
+    //
+    //         if (Date.now() - rider.staleness > 10 * 1000) {
+    //             domForRider.classList.add("delayed");
+    //         } else {
+    //             domForRider.classList.remove("gapped");
+    //         }
+    //
+    //         lastDist = rider.state.eventDistance;
+    //         lastofGroup = domForRider;
+    //     }
+    //
+    //     if (lastofGroup) {
+    //         lastofGroup.classList.add('groupEdge');
+    //     } else {
+    //         console.error("Last of group missing", groupNum);
+    //     }
+    //
+    //     groupNum++;
+    // }
     document.querySelectorAll(".rider").forEach(e=>{
         if (e.querySelector(".position").textContent=="-1"){
             e.classList.add("hide");
@@ -437,57 +298,6 @@ function renderData(){
         awayScoreDom.classList.remove("losing");
     }
 }
-function setupIndividuals(data, ids){
-    // console.log("SI:",data,ids);
-    document.querySelector(".SplashHomeTeam").textContent = data.homeTeamName;
-    document.querySelector(".SplashAwayTeam").textContent = data.awayTeamName;
-    document.querySelector(".homeScore").textContent = 0;
-    document.querySelector(".awayScore").textContent = 0;
-    let domDest = document.querySelector(".scoreList");
-    positionsCreated = 0;
-    domDest.innerHTML = "";
-    try{
-        data.homeSignups = JSON.parse(data.homeSignups);
-        data.awaySignups = JSON.parse(data.awaySignups);
-    } catch (e){
-        console.error(e)
-    }
-    for(let id of ids){
-        if (domDest){
-            let thisCard = riderHTML(id, data.homeSignups.includes(id));
-            // console.log(id,thisCard);
-            domDest.insertAdjacentHTML('beforeend', thisCard);
-        } else console.error("Scorelist missing");
-    }
-}
-
-// Debug stuff
-function testCards(){
-    document.querySelector(".SplashHomeTeam").textContent = "My Home Team";
-    document.querySelector(".SplashAwayTeam").textContent = "My Away Team";
-    document.querySelector(".homeScore").textContent = 0;
-    document.querySelector(".awayScore").textContent = 0;
-    let domDest = document.querySelector(".scoreList");
-    positionsCreated = 0;
-    domDest.innerHTML = "";
-    for(let j=0; j<10; j++){
-        if (domDest){
-            let id = 44249+j;
-            let thisCard = riderHTML(id, (j%2==0) );
-            domDest.insertAdjacentHTML('beforeend', thisCard);
-            if (j<6) {
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_1");
-            } else if (j==6){
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_1", "groupEdge");
-            } else if (j>6){
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("Group_2");
-            }
-            // catch (e){
-                // console.error(e);
-            // }
-        }
-    }
-}
 
 // UI Stuff
 var backgroundOpacity = 0;
@@ -504,6 +314,10 @@ window.addEventListener('keydown', async e=>{
         backgroundOpacity -= 0.10;
         backgroundOpacity = Math.min(1,backgroundOpacity);
         document.body.style["background"] = `rgba(0,0,0,${backgroundOpacity})`;
+    } else if (e.code == "KeyP"){
+        document.querySelector(".scoreList").classList.toggle("d-none");
+    } else if (e.code == "KeyT"){
+        document.querySelector(".topBar").classList.toggle("d-none");
     } else if (e.code == "KeyA"){
         const result = await createInputModal({
             title        : 'Add rider',
@@ -526,15 +340,15 @@ window.addEventListener('keydown', async e=>{
         } else {
             // console.log('Dialog cancelled');
         }
-    } else if (e.code == "KeyT"){
+    } else if (e.code == "KeyZ"){
         console.log("Trying Test")
         testCards();
         resizeFunc();
     }
 });
 
+// Wild scaling function
 window.addEventListener("resize", resizeFunc);
-
 function resizeFunc(evt){
     document.body.style["background"] = `rgba(0,0,0,${backgroundOpacity})`;
     // console.log("Resize finished");
@@ -594,9 +408,8 @@ function resizeFunc(evt){
         }
     })
 }
-resizeFunc();
-// testCards();
 
+// Add a rider function
 function createInputModal(options = {}) {
     const {
         title = 'Input Dialog',
@@ -609,25 +422,25 @@ function createInputModal(options = {}) {
     return new Promise((resolve) => {
         // Create modal container with a unique, unlikely-to-conflict ID
         const modalContainer = document.createElement('div');
-        modalContainer.id = 'anthropic-input-modal-' + Date.now();
-        modalContainer.style.position = 'fixed';
-        modalContainer.style.top = '0';
-        modalContainer.style.left = '0';
-        modalContainer.style.width = '100%';
-        modalContainer.style.height = '100%';
+        modalContainer.id                    = 'anthropic-input-modal-' + Date.now();
+        modalContainer.style.position        = 'fixed';
+        modalContainer.style.top             = '0';
+        modalContainer.style.left            = '0';
+        modalContainer.style.width           = '100%';
+        modalContainer.style.height          = '100%';
         modalContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        modalContainer.style.display = 'flex';
-        modalContainer.style.justifyContent = 'center';
-        modalContainer.style.alignItems = 'center';
-        modalContainer.style.zIndex = '10000';
+        modalContainer.style.display         = 'flex';
+        modalContainer.style.justifyContent  = 'center';
+        modalContainer.style.alignItems      = 'center';
+        modalContainer.style.zIndex          = '10000';
 
         // Create modal content
-        const modalContent = document.createElement('div');
+        const modalContent                 = document.createElement('div');
         modalContent.style.backgroundColor = 'white';
-        modalContent.style.padding = '20px';
-        modalContent.style.borderRadius = '5px';
-        modalContent.style.width = '300px';
-        modalContent.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        modalContent.style.padding         = '20px';
+        modalContent.style.borderRadius    = '5px';
+        modalContent.style.width           = '300px';
+        modalContent.style.boxShadow       = '0 4px 6px rgba(0, 0, 0, 0.1)';
 
         // Construct modal HTML
         modalContent.innerHTML = `
@@ -687,4 +500,40 @@ function createInputModal(options = {}) {
         // Focus on numeric input when modal opens
         numericInput.focus();
     });
+}
+
+main().then(_=>{
+    resizeFunc();
+});
+
+
+// Debug stuff
+function testCards(){
+    document.querySelector(".SplashHomeTeam").textContent = "My Home Team";
+    document.querySelector(".SplashAwayTeam").textContent = "My Away Team";
+    document.querySelector(".homeScore").textContent = 0;
+    document.querySelector(".awayScore").textContent = 0;
+    let domDest = document.querySelector(".scoreList");
+    positionsCreated = 0;
+    domDest.innerHTML = "";
+    for(let j=0; j<10; j++){
+        if (domDest){
+            let id = 44249+j;
+            let thisCard = riderHTML(id, (j%2==0) );
+            domDest.insertAdjacentHTML('beforeend', thisCard);
+            if (j==5) {
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("rearOfGroup");
+            } else if (j==6){
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("headOfGroup", "rearOfGroup");
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.setAttribute("data-margin", 10);
+                document.querySelector(`div.rider[data-rider-id="${id}"]`).style['margin-top'] = scaleDistanceToPixels(20);
+
+            } else if (j==7){
+                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("headOfGroup");
+            }
+            // catch (e){
+                // console.error(e);
+            // }
+        }
+    }
 }

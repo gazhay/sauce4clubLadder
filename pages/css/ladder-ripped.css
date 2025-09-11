@@ -14,10 +14,10 @@
     --ladder-tertiary-bg     : rgba( 33, 113, 182, 0.75);
     --ladder-text-bg         : rgba(  0,   0,   0, 0.75);/*rgba(255,255,255, 0.5);*/
 }
-
 html, body {
-    background      : transparent;
-    user-select     :none;
+    background: transparent;
+    user-select: none;
+    pointer-events: auto !important; /* Force pointer events to be detected */
 }
 
 @font-face {
@@ -127,23 +127,4 @@ html, body {
     src: url('../fonts/SofiaSans-Thin.ttf');
     font-weight: 300;
     font-style: normal;
-}
-
-.rider {
-    transition: all 0.5s ease-in-out;
-}
-
-.rider.finished {
-    background-color: rgba(76, 175, 80, 0.1) !important;  /* Light green background */
-    border-left: 4px solid #4CAF50 !important;  /* Green border */
-}
-
-.rider.delayed {
-    opacity: 0.8;
-    background-color: rgba(255, 152, 0, 0.1) !important;  /* Light orange background */
-}
-
-.rider.very-delayed {
-    opacity: 0.6;
-    background-color: rgba(244, 67, 54, 0.1) !important;  /* Light red background */
 }
