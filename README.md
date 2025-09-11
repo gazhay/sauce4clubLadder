@@ -1,6 +1,13 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+Changes v0.1.0 - Sep 2025
+-------------------------
+
+* Fixed and revamped code
+* Window now moves again, T and P toggle the main score and rider scores elements 
+* Esc reloads (if the distances get screwed)
+
 Changes v0.0.6 - March 2025
 ---------------------------
 * Reworked logic to remove circular nonsense
