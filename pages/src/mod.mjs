@@ -1,25 +1,20 @@
 import * as common from '/pages/src/common.mjs';
 import * as utils  from './utils.js';
-import * as data   from './data.js';
-
-// Attach to global scope
-Object.assign(globalThis, utils, data);
 
 const doc = document.documentElement;
 doc.classList.remove("frame");
 
-var   GAPPY       = false;
-var   EVENT       = null;
+var GAPPY            = false;
+var EVENT            = null;
 
-// console.log("ClubLadder mod ",DEBUG, SERVER);
-const GAP_SIZE = 15; //meters
+const GAP_SIZE       = 15; //meters
 
-var scoreForPos  = pos =>[10,9,8,7,6,5,4,3,2,1][pos-1]??0;
-let tops         = Array.from(Array(12).keys()).map( (a,i) =>( 10+ (45*(i-1)) ));
-let riderCache   = [];
+var scoreForPos      = pos =>[10,9,8,7,6,5,4,3,2,1][pos-1]??0;
+let tops             = Array.from(Array(12).keys()).map( (a,i) =>( 10+ (45*(i-1)) ));
+let riderCache       = [];
 
-let riderMaxes   = {};
-let finishers    = [];
+let riderMaxes       = {};
+let finishers        = [];
 
 var positionsCreated = 0;
 var homeTextColor    = null;
@@ -48,7 +43,97 @@ const fakeClubs      = {
     }
 };
 
+const DEBUG          = "";//"debug";
+var USER             = 0;
+const SERVER         = (DEBUG!="")?"http://arwen.lan:5000":"https://ladder.cycleracing.club";
+var INTERESTEDIN     = [];
 
+// Data poll and render
+export function onAthleteData(data) {
+    data.staleness = new Date();
+    // If no existing max, initialize from incoming data
+    if (!riderMaxes[data.athleteId]) {
+        riderMaxes[data.athleteId] = data.state.eventDistance || 0;
+    }
+
+    let existing = riderCache.findIndex(a=>a.athleteId==data.athleteId);
+    if (existing==-1){
+        riderCache.push(data);
+    } else {
+        riderCache.splice(existing, 1, data);
+    }
+
+    // Always use the larger value
+    const previousMax = riderMaxes[data.athleteId];
+    riderMaxes[data.athleteId] = Math.max(
+        riderMaxes[data.athleteId],
+        data.state.eventDistance || 0
+    );
+
+    data.state.eventDistance = riderMaxes[data.athleteId];
+
+    const now = Date.now();
+    if (now - ts > 1900) {
+        ts = now;
+        renderData();
+    }
+}
+export async function fetchFromLadder(fake=false){
+    if (fake){
+        testCards();
+        return setupClubColors(fakeClubs);
+    }
+    if (USER==0 && DEBUG=="") return null;
+    console.log("Setting up",`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`);
+    let myLadderData = await fetch(`${SERVER}/whatFixtureShouldIBeIn/${USER}${DEBUG}`).then(response=>response.json());
+    if (!myLadderData || myLadderData.length==0){
+        console.log("Timeout here and try again later",myLadderData);
+        return null;
+    }
+    myLadderData = myLadderData?.[0] || [];
+
+    // Now we have to get the points structure for ladder matches
+    await fetch(`${SERVER}/api/pointsStructure`).then(response=>response.json()).then(scores=>{
+        if (scores && scores?.length>0){
+            scoreForPos = pos=>[...scores][pos-1]??0;
+        }
+    }).catch(err=>{console.log("Failed to fetch points",err)});
+
+    let oldInterests = INTERESTEDIN;
+    INTERESTEDIN = [...JSON.parse(myLadderData?.homeSignups),...JSON.parse(myLadderData?.awaySignups)];
+    console.log("Found riders from ladder :", INTERESTEDIN, myLadderData);
+    for (let subs of oldInterests){
+        common.unsubscribe(`athlete/${subs}`, onAthleteData);
+    }
+    // console.log(">>>>",INTERESTEDIN)
+    positionsCreated=0;
+    for(let rider of INTERESTEDIN){
+        // console.log("real subscribe",rider)
+        common.subscribe(`athlete/${rider}`, onAthleteData);
+    }
+
+    setupIndividuals(myLadderData, INTERESTEDIN);
+    setupClubColors(myLadderData);
+    return true;
+}
+// initial subscription
+export async function main() {
+    common.subscribe('athlete/watching', async data => {
+        let olduser = USER;
+        if (data.athleteId != USER){
+            USER         = data.athleteId;
+            console.log("Switched to ",USER);
+            if (USER!=0) await fetchFromLadder();
+        }
+    });
+
+    await fetchFromLadder();
+
+    for(let rider of INTERESTEDIN){
+        console.log("Subscribe",rider)
+        common.subscribe(`athlete/${rider}`, onAthleteData);
+    }
+}
 // Global Setup
 function setupClubColors(data) {
   if (data?.homeClub?.color1) { document.documentElement.style.setProperty("--ladder-secondary-bg", data.homeClub.color1); }
@@ -72,7 +157,6 @@ function setupClubColors(data) {
     document.querySelectorAll(".forAway").forEach(elem => elem.style.color = awayText);
   }
 }
-
 // Rider Setup
 const riderHTML = (riderId,isHome, fakeNames=false) =>{
     // if (positionsCreated>=10) return "";
@@ -111,7 +195,6 @@ function setupIndividuals(data, ids){
         } else console.error("Scorelist missing");
     }
 }
-
 function groupRaceCompetitors(competitors, bikeLengthSeparation = 5) {
     // Handle empty input
     if (!competitors || competitors.length === 0) {
@@ -155,7 +238,6 @@ function scaleDistanceToPixels(meters) {
 
     return `${Math.round(pixelValue)}px`;
 }
-
 
 function renderData(){
     resizeFunc();
@@ -215,56 +297,6 @@ function renderData(){
         domForRider.style.top = `${tops[riderPos]}px`;
     });
 
-
-    // let groups   = riderCache.map( a => {return {id:a.athleteId, distance:a.state.eventDistance}});
-    // groups       = groupRaceCompetitors(groups, 5); // 5 bikelength drop thingy
-    // let groupNum = 1;
-    // for (let group of groups) {
-    //     let lastofGroup = null;
-    //     // Remove groupEdge from all riders first
-    //     document.querySelectorAll('.groupEdge').forEach(el => { el.classList.remove('groupEdge'); });
-    //     const riderMap = new Map(riderCache.map(r => [r.athleteId, r]));
-    //     for (let riderId of group.map(a => a.id)) {
-    //         let rider = riderMap.get(riderId);
-    //         let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
-    //
-    //         if (!domForRider) {
-    //             console.error("Didn't find HTML for ", rider.athlete.id);
-    //             continue;
-    //         }
-    //
-    //         let riderPos = ++position;
-    //         domForRider.querySelectorAll(".score").forEach(e => e.textContent = scoreForPos(riderPos));
-    //         domForRider.querySelector(".position").textContent = riderPos;
-    //         domForRider.querySelectorAll(".name").forEach(e => e.textContent = rider.athlete.sanitizedFullname);
-    //         domForRider.style.position = "absolute";
-    //         domForRider.style.top = `${tops[riderPos]}px`;
-    //
-    //         // Remove all Group_ classes
-    //         for (let i = 0; i < 10; i++) {
-    //             domForRider.classList.remove(`Group_${i+1}`)
-    //         }
-    //
-    //         domForRider.classList.add(`Group_${groupNum}`);
-    //
-    //         if (Date.now() - rider.staleness > 10 * 1000) {
-    //             domForRider.classList.add("delayed");
-    //         } else {
-    //             domForRider.classList.remove("gapped");
-    //         }
-    //
-    //         lastDist = rider.state.eventDistance;
-    //         lastofGroup = domForRider;
-    //     }
-    //
-    //     if (lastofGroup) {
-    //         lastofGroup.classList.add('groupEdge');
-    //     } else {
-    //         console.error("Last of group missing", groupNum);
-    //     }
-    //
-    //     groupNum++;
-    // }
     document.querySelectorAll(".rider").forEach(e=>{
         if (e.querySelector(".position").textContent=="-1"){
             e.classList.add("hide");
@@ -327,8 +359,8 @@ window.addEventListener('keydown', async e=>{
         });
 
         if (result) {
-            let zwiftId = result.numeric;
-            let team    = result.select;
+            let zwiftId  = result.numeric;
+            let team     = result.select;
 
             let thisCard = riderHTML(zwiftId, team=="Home");
             let domDest  = document.querySelector(".scoreList");
@@ -337,8 +369,6 @@ window.addEventListener('keydown', async e=>{
             common.subscribe(`athlete/${zwiftId}`, onAthleteData);
             console.log('Added Rider:', zwiftId);
             resizeFunc();
-        } else {
-            // console.log('Dialog cancelled');
         }
     } else if (e.code == "KeyZ"){
         console.log("Trying Test")
@@ -502,10 +532,7 @@ function createInputModal(options = {}) {
     });
 }
 
-main().then(_=>{
-    resizeFunc();
-});
-
+main().then(_=>{ resizeFunc(); });
 
 // Debug stuff
 function testCards(){
