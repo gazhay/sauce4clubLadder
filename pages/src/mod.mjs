@@ -305,7 +305,7 @@ function renderData(){
     riderCache.sort( (a,b)=>{
         let aVal = a.state.eventDistance;
         let bVal = b.state.eventDistance;
-        return aVal - bVal; // will mostly be correct since eventPosition doesn't exist ?!
+        return bVal - aVal; // will mostly be correct since eventPosition doesn't exist ?!
     });
 
     // let gap = 0;
