@@ -585,33 +585,78 @@ function createInputModal(options = {}) {
 
 main().then(_=>{ resizeFunc(); });
 
-// Debug stuff
-function testCards(){
-    document.querySelector(".SplashHomeTeam").textContent = "My Home Team";
-    document.querySelector(".SplashAwayTeam").textContent = "My Away Team";
-    document.querySelector(".homeScore").textContent = 0;
-    document.querySelector(".awayScore").textContent = 0;
-    let domDest = document.querySelector(".scoreList");
-    positionsCreated = 0;
-    domDest.innerHTML = "";
-    for(let j=0; j<10; j++){
-        if (domDest){
-            let id = 44249+j;
-            let thisCard = riderHTML(id, (j%2==0) );
-            domDest.insertAdjacentHTML('beforeend', thisCard);
-            if (j==5) {
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("rearOfGroup");
-            } else if (j==6){
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("headOfGroup", "rearOfGroup");
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.setAttribute("data-margin", 10);
-                document.querySelector(`div.rider[data-rider-id="${id}"]`).style['margin-top'] = scaleDistanceToPixels(20);
+// Debug/Simulation
+// Simulation state and configuration
+let simIntervalId = null;
+let simRiders = [];
+let simDistances = new Map();
+const simConfig = {
+    tickMs: 1000,          // update cadence (ms)
+    baseSpeed: 120,        // meters per tick baseline
+    randomVariance: 60,    // ± meters per tick
+    surgeProbability: 0.1, // chance of extra surge per tick
+    surgeBoost: 80,        // extra meters when surge triggers
+};
 
-            } else if (j==7){
-                document.querySelector(`div.rider[data-rider-id="${id}"]`)?.classList?.add("headOfGroup");
-            }
-            // catch (e){
-                // console.error(e);
-            // }
-        }
+function buildSimRiders(n = 10){
+    simRiders = Array.from({ length: n }, (_, j) => {
+        const id = 44000 + j;
+        return {
+            athleteId: id,
+            athlete: { id, sanitizedFullname: `Rider ${j + 1}` },
+            team: (j % 2 === 0) ? 'home' : 'away',
+        };
+    });
+    simDistances = new Map(simRiders.map(r => [r.athleteId, 0]));
+}
+
+function generateSimTick(){
+    for (const r of simRiders){
+        const noise = (Math.random() * 2 - 1) * simConfig.randomVariance;
+        const surge = Math.random() < simConfig.surgeProbability ? simConfig.surgeBoost : 0;
+        const delta = Math.max(0, simConfig.baseSpeed + noise + surge);
+        const nextDist = (simDistances.get(r.athleteId) || 0) + delta;
+        simDistances.set(r.athleteId, nextDist);
+
+        onAthleteData({
+            athleteId: r.athleteId,
+            athlete: { id: r.athleteId, sanitizedFullname: r.athlete.sanitizedFullname },
+            state: { eventDistance: nextDist },
+        });
     }
+}
+
+// Repurpose testCards as the simulation starter (bound to KeyZ)
+function testCards(){
+    // Reset view
+    positionsCreated = 0;
+    const domDest = document.querySelector('.scoreList');
+    if (domDest) domDest.innerHTML = '';
+    document.querySelector('.homeScore').textContent = 0;
+    document.querySelector('.awayScore').textContent = 0;
+
+    // Build simulated riders
+    buildSimRiders(10);
+    const ids = simRiders.map(r => r.athleteId);
+    const homeIds = ids.filter((_, i) => i % 2 === 0);
+    const awayIds = ids.filter((_, i) => i % 2 === 1);
+
+    // Initialize DOM using existing flow
+    const simData = {
+        homeTeamName: 'Sim Home Team',
+        awayTeamName: 'Sim Away Team',
+        homeSignups: JSON.stringify(homeIds),
+        awaySignups: JSON.stringify(awayIds),
+        homeClub: { color1: '#043F4F', textColor1: '#ffffff' },
+        awayClub: { color1: '#274E13', textColor1: '#ffffff' },
+    };
+    setupIndividuals(simData, ids);
+    // Apply club colors if available in current module
+    if (typeof setupClubColors === 'function') {
+        setupClubColors(simData);
+    }
+
+    // Start ticking
+    if (simIntervalId) clearInterval(simIntervalId);
+    simIntervalId = setInterval(generateSimTick, simConfig.tickMs);
 }
