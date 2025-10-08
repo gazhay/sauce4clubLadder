@@ -321,8 +321,8 @@ function renderData(){
             return;
         }
 
-        let beforeDist = riderBefore.state.eventDistance - rider.state.eventDistance;
-        let afterDist  = rider.state.eventDistance       - riderAfter.state.eventDistance;
+        let beforeDist = riderBefore?.state.eventDistance - rider.state.eventDistance ?? 0;
+        let afterDist  = rider.state.eventDistance        - riderAfter?.state.eventDistance ??0 ;
         if (riderBefore && ((beforeDist) > GAP_SIZE)){
             domForRider.classList.add("headOfGroup");
             domForRider.style['margin-top'] = scaleDistanceToPixels(beforeDist);
