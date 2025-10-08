@@ -1,6 +1,8 @@
 sauce4zwift Club Ladder Live Score
 ========
 
+This is fundamentally broken. 0.0.5 is probably the last properly working version.
+
 Changes v0.1.1 - Oct 2025
 -------------------------
 
