@@ -4,7 +4,7 @@
     "description"     : "Version 2, but really someone else write one will yous?",
     "author"          : "Gareth Hay",
     "website_url"     : "https://ladder.cycleracing.club",
-    "version"         : "0.2.0",
+    "version"         : "0.2.1",
     "content_js"      : [],
     "content_css"     : [],
     "web_root"        : "pages",

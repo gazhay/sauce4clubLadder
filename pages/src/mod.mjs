@@ -213,7 +213,7 @@ const riderHTML = (riderId,isHome, fakeNames=false) =>{
     // if (positionsCreated>=10) return "";
     let thisPos = ++positionsCreated;
     let output =
-    `<div class="rider ${positionsCreated>=10?"d-none":""} ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
+    `<div class="rider ${positionsCreated>10?"d-none":""} ${isHome?"home":"away"}Rider scaleMe" data-rider-id="${riderId}" data-move-to-position="${thisPos}" data-original-height="40" data-scale="onlyHeight">
         <div class="score forHome scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${scoreForPos(thisPos)} </div>
         <div class="name forHome text-truncate scaleMe" data-font-size="25" data-line-height="40" data-scale="textOnly"> ${"JimBob" + (Math.random()*1000).toFixed(0)} </div>
         <div class="position scaleMe" data-font-size="18" data-line-height="40" data-scale="textOnly"> ${thisPos} </div>

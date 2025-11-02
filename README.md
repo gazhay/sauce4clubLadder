@@ -1,7 +1,10 @@
 sauce4zwift Club Ladder Live Score
 ========
 
-This is fundamentally broken. 0.0.5 is probably the last properly working version.
+Changes v0.2.1 - Nov 2025
+-------------------------
+
+* Applied the Onno Fix (Thanks Onno) - check out his excellent sauce mods [Sauce Discord Channel](https://discord.com/channels/744994375469367316/1187497848133140654)
 
 Changes v0.1.1 - Oct 2025
 -------------------------
