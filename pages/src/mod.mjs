@@ -102,6 +102,12 @@ var INTERESTEDIN     = [];
 // Data poll and render
 export function onAthleteData(data) {
     data.staleness = new Date();
+    
+    // Diagnostic: Log incoming data structure
+    if (!data.athlete || !data.athlete.sanitizedFullname) {
+        console.warn("Received athlete data missing name!", "athleteId:", data.athleteId, "athlete obj:", data.athlete);
+    }
+    
     // If no existing max, initialize from incoming data
     if (!riderMaxes[data.athleteId]) {
         riderMaxes[data.athleteId] = data.state.eventDistance || 0;
@@ -314,11 +320,16 @@ function renderData(){
         let riderBefore = index > 0 ? riderCache[index - 1] : null;
         let riderAfter  = index < riderCache.length - 1 ? riderCache[index + 1] : null;
 
-        console.log("Rendering for ", rider.athleteId);
+        console.log("Rendering for ", rider.athleteId, "Name:", rider.athlete?.sanitizedFullname, "Distance:", rider.state?.eventDistance);
         let domForRider = document.querySelector(`.rider[data-rider-id="${rider.athlete.id}"]`);
         if (!domForRider){
-            console.error("Didn't find HTML for ",rider.athlete.id);
+            console.error("Didn't find HTML for ",rider.athlete.id, "- DOM elements exist:", document.querySelectorAll('.rider').length);
             return;
+        }
+        
+        // Diagnostic: Check if rider has proper team class
+        if (!domForRider.classList.contains('homeRider') && !domForRider.classList.contains('awayRider')) {
+            console.warn("Rider", rider.athleteId, "missing team class! Classes:", domForRider.className);
         }
 
         let beforeDist = riderBefore?.state.eventDistance - rider.state.eventDistance ?? 0;
